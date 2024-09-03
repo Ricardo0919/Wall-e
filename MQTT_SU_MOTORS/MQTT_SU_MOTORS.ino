@@ -43,7 +43,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
     Serial.println(message);
 
     // Controlar el motor 1 según el mensaje recibido
-    if (String(topic) == "esp32/motors") {
+    if (String(topic) == "esp32/movement") {
         if (message == "Forward") {
             //Motor1
             digitalWrite(IN1, HIGH);
@@ -76,7 +76,7 @@ void reconnect() {
         if (mqttClient.connect("ESP32Client")) {
             Serial.println("Conectado");
             // Suscribirse a los tópicos de los motores
-            mqttClient.subscribe("esp32/motors");
+            mqttClient.subscribe("esp32/movement");
         } else {
             Serial.print("Fallido, rc=");
             Serial.print(mqttClient.state());
