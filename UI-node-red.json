@@ -1,21 +1,24 @@
 [
     {
-        "id": "d56d4b13d30f4595",
-        "type": "mqtt out",
+        "id": "fb04f33d4067a623",
+        "type": "mqtt in",
         "z": "e1a7e71d7b85c854",
         "name": "",
-        "topic": "esp32/movement",
-        "qos": "",
-        "retain": "",
-        "respTopic": "",
-        "contentType": "",
-        "userProps": "",
-        "correl": "",
-        "expiry": "",
+        "topic": "esp32/Turn",
+        "qos": "2",
+        "datatype": "auto-detect",
         "broker": "947aa3e7ca25c668",
-        "x": 490,
-        "y": 400,
-        "wires": []
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 260,
+        "y": 520,
+        "wires": [
+            [
+                "41a22a5be7237075"
+            ]
+        ]
     },
     {
         "id": "947aa3e7ca25c668",
