@@ -23,10 +23,10 @@ const char* ssid = "Ricardo";
 const char* password = "ricki1903#$";
 
 // Configuración del broker MQTT
-//Casa
-const char* mqttServer = "192.168.1.85";
+// Casa
+//const char* mqttServer = "192.168.1.85";
 //TEC
-//const char* mqttServer = "10.25.99.111";
+const char* mqttServer = "10.25.109.41";
 const int mqttPort = 1883;
 
 // Instancias de cliente Wi-Fi y MQTT
@@ -35,18 +35,15 @@ PubSubClient mqttClient(wifiClient);
 
 bool isMeasuring = false;  // Variable para controlar si se está midiendo o no
 
-// Variable global para almacenar el comando de giro
-String turnCommand = "";
-
 void forward(){
   int motorSpeed = 100;
 
   //Motor1
-  digitalWrite(IN1, motorSpeed);
-  digitalWrite(IN2, 0);
+  analogWrite(IN1, motorSpeed);
+  analogWrite(IN2, 0);
   //Motor2
-  digitalWrite(IN3, 0);
-  digitalWrite(IN4, motorSpeed);
+  analogWrite(IN3, 0);
+  analogWrite(IN4, motorSpeed);
 }
 
 void turn() {
@@ -68,6 +65,8 @@ void turn() {
   analogWrite(IN2, 0);   // Apagar Motor1
   analogWrite(IN3, 0);   // Apagar Motor2
   analogWrite(IN4, 0);   // Apagar Motor2
+
+  mqttClient.publish("esp32/movement", "Start");
 }
 
 
@@ -76,22 +75,18 @@ void start() {
 
   // Activar medición
   isMeasuring = true;
-
-  // Verificar el comando recibido del tópico esp32/turn
-  if (turnCommand == "Turn") {
-    turn();  // Si el mensaje es "Turn", llamar a la función turn
-  } else {
-    forward();  // Si el mensaje no es "Turn", avanzar hacia adelante
-  }
+  Serial.print("Start");
+  
+  forward();
 }
 
 void stop() {
   //Motor1
-  digitalWrite(IN1, LOW);
-  digitalWrite(IN2, LOW);
+  analogWrite(IN1, LOW);
+  analogWrite(IN2, LOW);
   //Motor2
-  digitalWrite(IN3, LOW);
-  digitalWrite(IN4, LOW);
+  analogWrite(IN3, LOW);
+  analogWrite(IN4, LOW);
 
   isMeasuring = false;  // Detener medición
   mqttClient.publish("esp32/distance", "Measurement has been stopped");
@@ -131,12 +126,6 @@ void measureDistance() {
         digitalWrite(buzzer, LOW);   // Apagar el buzzer después de 2 segundos
       }
 
-      if (turnCommand == "Turn") {
-        turn();  // Si el comando es "Turn", llamar a la función turn
-      } else {
-        forward();  // Si no, seguir avanzando
-      }
-
     } else {
       Serial.println("Out of range");
       mqttClient.publish("esp32/distance", "Out of range");
@@ -161,15 +150,15 @@ void callback(char* topic, byte* payload, unsigned int length) {
   if (String(topic) == "esp32/movement") {
     if (message == "Start") {
       start();  // Comenzar medición y mover motores
-    } else if (message == "Stop") {
+    } 
+    else if (message == "Turn") {
+      turn();   // Detener motores y medición
+    }
+    else if (message == "Stop") {
       stop();   // Detener motores y medición
     }
   }
   
-  if (String(topic) == "esp32/turn") {
-    // Guardar el comando recibido en el tópico esp32/turn
-    turnCommand = message;
-  }
 }
 
 // Conectar al broker MQTT

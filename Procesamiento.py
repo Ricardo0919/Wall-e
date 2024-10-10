@@ -23,11 +23,8 @@ def on_message(client, userdata, msg):
 
         # Comprobar si la distancia está en el rango entre 10 y 15 cm
         if 10 <= distance <= 15:
-            client.publish("esp32/Turn", "Turn")
+            client.publish("esp32/movement", "Turn")
             print("Publicado 'Turn' en esp32/Turn")
-        else:
-            client.publish("esp32/Turn", "Nothing")
-            print("Publicado 'Nothing' en esp32/Turn")
     else:
         print("Formato de mensaje de distancia no reconocido")
 
@@ -40,7 +37,10 @@ client.on_connect = on_connect
 client.on_message = on_message
 
 # Conexión al broker MQTT (puedes cambiar el host y puerto si es necesario)
-client.connect("192.168.1.85", 1883, 60)
+# Casa
+#client.connect("192.168.1.85", 1883, 60)
+# TEC
+client.connect("10.25.109.41", 1883, 60)
 
 # Inicio de un hilo para manejar la red y las callbacks
 client.loop_start()
