@@ -1,4 +1,4 @@
- #include <WiFi.h>
+#include <WiFi.h>
 #include <PubSubClient.h>
 
 // Configuración del sensor ultrasónico
@@ -8,8 +8,16 @@
 // Configuración del puente H para los motores
 #define IN1 23
 #define IN2 22
-#define IN3 21
-#define IN4 19
+#define IN3 16
+#define IN4 4
+
+#define FREQ 5000
+#define PWM_CHANNEL1 0
+#define PWM_CHANNEL2 1
+#define PWM_CHANNEL3 2
+#define RESOLUTION 8
+int straightSpeed = 140; 
+int turnSpeed = 100;
 
 // Buzzer
 #define buzzer 18
@@ -36,35 +44,40 @@ PubSubClient mqttClient(wifiClient);
 bool isMeasuring = false;  // Variable para controlar si se está midiendo o no
 
 void forward(){
-  int motorSpeed = 100;
-
   //Motor1
-  analogWrite(IN1, motorSpeed);
-  analogWrite(IN2, 0);
+  ledcAttachPin(IN1, PWM_CHANNEL1);
+  ledcWrite(PWM_CHANNEL1, straightSpeed);
+  digitalWrite(IN2, LOW);
+
   //Motor2
-  analogWrite(IN3, 0);
-  analogWrite(IN4, motorSpeed);
+  digitalWrite(IN3, LOW);
+  ledcAttachPin(IN4, PWM_CHANNEL2);
+  ledcWrite(PWM_CHANNEL2, straightSpeed);
+
 }
 
 void turn() {
-  int motorSpeed = 100;
-
   // Motor1 gira hacia adelante
-  analogWrite(IN1, motorSpeed);
-  analogWrite(IN2, 0);   // Apagar la entrada IN2 para que Motor1 gire hacia adelante
+  ledcAttachPin(IN1, PWM_CHANNEL1);
+  ledcWrite(PWM_CHANNEL1, turnSpeed);
+  digitalWrite(IN2, LOW);   // Apagar la entrada IN2 para que Motor1 gire hacia adelante
 
   // Motor2 gira hacia atrás
-  analogWrite(IN3, motorSpeed);   // Apagar la entrada IN3 para que Motor2 gire hacia atrás
-  analogWrite(IN4, 0);
+  digitalWrite(IN3, HIGH);    // Apagar la entrada IN3 para que Motor2 gire hacia atrás
+  ledcAttachPin(IN4, PWM_CHANNEL2);
+  ledcWrite(PWM_CHANNEL2, turnSpeed);
 
   // Mantener el giro por 4 segundos
-  delay(4000);
+  delay(800);
 
   // Detener los motores después de 4 segundos
-  analogWrite(IN1, 0);   // Apagar Motor1
-  analogWrite(IN2, 0);   // Apagar Motor1
-  analogWrite(IN3, 0);   // Apagar Motor2
-  analogWrite(IN4, 0);   // Apagar Motor2
+  digitalWrite(IN1, LOW);   // Apagar Motor1
+  digitalWrite(IN2, LOW);   // Apagar Motor1
+  digitalWrite(IN3, LOW);   // Apagar Motor2
+  digitalWrite(IN4, LOW);   // Apagar Motor2
+
+  ledcWrite(PWM_CHANNEL1, 0);
+  ledcWrite(PWM_CHANNEL2, 0);
 
   mqttClient.publish("esp32/movement", "Start");
 }
@@ -82,11 +95,14 @@ void start() {
 
 void stop() {
   //Motor1
-  analogWrite(IN1, LOW);
-  analogWrite(IN2, LOW);
+  digitalWrite(IN1, LOW);
+  digitalWrite(IN2, LOW);
   //Motor2
-  analogWrite(IN3, LOW);
-  analogWrite(IN4, LOW);
+  digitalWrite(IN3, LOW);
+  digitalWrite(IN4, LOW);
+
+  ledcWrite(PWM_CHANNEL1, 0);
+  ledcWrite(PWM_CHANNEL2, 0);
 
   isMeasuring = false;  // Detener medición
   mqttClient.publish("esp32/distance", "Measurement has been stopped");
@@ -195,6 +211,10 @@ void setup() {
     pinMode(IN2, OUTPUT);
     pinMode(IN3, OUTPUT);
     pinMode(IN4, OUTPUT);
+
+    ledcSetup(PWM_CHANNEL1, FREQ, RESOLUTION);
+    ledcSetup(PWM_CHANNEL2, FREQ, RESOLUTION);
+
 
     // Conectar a la red Wi-Fi
     WiFi.begin(ssid, password);
