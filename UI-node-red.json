@@ -1,5 +1,195 @@
 [
     {
+        "id": "e1a7e71d7b85c854",
+        "type": "tab",
+        "label": "Flow 1",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "3501fdbcd1f16838",
+        "type": "ui_text_input",
+        "z": "e1a7e71d7b85c854",
+        "name": "",
+        "label": "Ultrasonic Sensor",
+        "tooltip": "",
+        "group": "c23dc8d241ddbc9c",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "passthru": true,
+        "mode": "text",
+        "delay": 300,
+        "topic": "topic",
+        "sendOnBlur": true,
+        "className": "",
+        "topicType": "msg",
+        "x": 490,
+        "y": 200,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "97a1125c6a64e58e",
+        "type": "mqtt in",
+        "z": "e1a7e71d7b85c854",
+        "name": "",
+        "topic": "esp32/distance",
+        "qos": "2",
+        "datatype": "auto-detect",
+        "broker": "947aa3e7ca25c668",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 280,
+        "y": 200,
+        "wires": [
+            [
+                "3501fdbcd1f16838"
+            ]
+        ]
+    },
+    {
+        "id": "e243124da4800284",
+        "type": "ui_button",
+        "z": "e1a7e71d7b85c854",
+        "name": "",
+        "group": "c23dc8d241ddbc9c",
+        "order": 2,
+        "width": 0,
+        "height": 0,
+        "passthru": false,
+        "label": "Start",
+        "tooltip": "",
+        "color": "",
+        "bgcolor": "",
+        "className": "",
+        "icon": "",
+        "payload": "Start",
+        "payloadType": "str",
+        "topic": "topic",
+        "topicType": "msg",
+        "x": 250,
+        "y": 360,
+        "wires": [
+            [
+                "e8e66222676c644a"
+            ]
+        ]
+    },
+    {
+        "id": "e8e66222676c644a",
+        "type": "mqtt out",
+        "z": "e1a7e71d7b85c854",
+        "name": "",
+        "topic": "esp32/movement",
+        "qos": "",
+        "retain": "",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "947aa3e7ca25c668",
+        "x": 490,
+        "y": 360,
+        "wires": []
+    },
+    {
+        "id": "0899de230be4ac62",
+        "type": "ui_button",
+        "z": "e1a7e71d7b85c854",
+        "name": "",
+        "group": "c23dc8d241ddbc9c",
+        "order": 2,
+        "width": 0,
+        "height": 0,
+        "passthru": false,
+        "label": "Stop",
+        "tooltip": "",
+        "color": "",
+        "bgcolor": "",
+        "className": "",
+        "icon": "",
+        "payload": "Stop",
+        "payloadType": "str",
+        "topic": "topic",
+        "topicType": "msg",
+        "x": 250,
+        "y": 440,
+        "wires": [
+            [
+                "d56d4b13d30f4595"
+            ]
+        ]
+    },
+    {
+        "id": "d56d4b13d30f4595",
+        "type": "mqtt out",
+        "z": "e1a7e71d7b85c854",
+        "name": "",
+        "topic": "esp32/movement",
+        "qos": "",
+        "retain": "",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "947aa3e7ca25c668",
+        "x": 490,
+        "y": 440,
+        "wires": []
+    },
+    {
+        "id": "0a0dd999fc31db84",
+        "type": "ui_text_input",
+        "z": "e1a7e71d7b85c854",
+        "name": "",
+        "label": "Object",
+        "tooltip": "",
+        "group": "c23dc8d241ddbc9c",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "passthru": true,
+        "mode": "text",
+        "delay": 300,
+        "topic": "topic",
+        "sendOnBlur": true,
+        "className": "",
+        "topicType": "msg",
+        "x": 450,
+        "y": 280,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "df902f54eee2a561",
+        "type": "mqtt in",
+        "z": "e1a7e71d7b85c854",
+        "name": "",
+        "topic": "esp32/object",
+        "qos": "2",
+        "datatype": "auto-detect",
+        "broker": "947aa3e7ca25c668",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 270,
+        "y": 280,
+        "wires": [
+            [
+                "0a0dd999fc31db84"
+            ]
+        ]
+    },
+    {
         "id": "41a22a5be7237075",
         "type": "ui_text_input",
         "z": "e1a7e71d7b85c854",
@@ -24,6 +214,27 @@
         ]
     },
     {
+        "id": "fb04f33d4067a623",
+        "type": "mqtt in",
+        "z": "e1a7e71d7b85c854",
+        "name": "",
+        "topic": "esp32/movement",
+        "qos": "2",
+        "datatype": "auto-detect",
+        "broker": "947aa3e7ca25c668",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 280,
+        "y": 520,
+        "wires": [
+            [
+                "41a22a5be7237075"
+            ]
+        ]
+    },
+    {
         "id": "c23dc8d241ddbc9c",
         "type": "ui_group",
         "name": "Group 1",
@@ -31,6 +242,37 @@
         "order": 1,
         "disp": true,
         "width": 6
+    },
+    {
+        "id": "947aa3e7ca25c668",
+        "type": "mqtt-broker",
+        "name": "huawei@laptop",
+        "broker": "localhost",
+        "port": "1883",
+        "clientid": "",
+        "autoConnect": true,
+        "usetls": false,
+        "protocolVersion": "4",
+        "keepalive": "60",
+        "cleansession": true,
+        "autoUnsubscribe": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthRetain": "false",
+        "birthPayload": "",
+        "birthMsg": {},
+        "closeTopic": "",
+        "closeQos": "0",
+        "closeRetain": "false",
+        "closePayload": "",
+        "closeMsg": {},
+        "willTopic": "",
+        "willQos": "0",
+        "willRetain": "false",
+        "willPayload": "",
+        "willMsg": {},
+        "userProps": "",
+        "sessionExpiry": ""
     },
     {
         "id": "3b499c3a5dd489da",
