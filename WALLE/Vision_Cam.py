@@ -3,15 +3,23 @@ import urllib.request
 import numpy as np
 import time
 
-# URL del stream de la cámara ESP32 (ajusta la IP a la de tu ESP32)
-url = 'http://192.168.137.3/capture'  # Cambia la URL según sea necesario
+# URL del stream de la cámara ESP32
+url = 'http://192.168.137.3/capture'  # Cambia la IP si es necesario
 
-# Define los rangos de color en HSV para diferentes colores de pelota
+# Rangos de color en HSV
 color_ranges = {
-    'rojo': ([0, 120, 70], [10, 255, 255]),         # Rojo (ajusta para obtener el color deseado)
-    'verde': ([35, 100, 100], [85, 255, 255]),      # Verde
-    'azul': ([100, 150, 0], [140, 255, 255])        # Azul
+    'azul': ([100, 150, 0], [140, 255, 255]),
+    'rojo': ([0, 120, 70], [10, 255, 255]),
+    'amarillo': ([20, 100, 100], [30, 255, 255]),
+    'verde': ([35, 100, 100], [85, 255, 255])  # Rango para verde
 }
+
+# Crear una ventana para cada color
+cv2.namedWindow('ESP32 - Video en Vivo', cv2.WINDOW_NORMAL)
+cv2.namedWindow('Detección de Azul', cv2.WINDOW_NORMAL)
+cv2.namedWindow('Detección de Rojo', cv2.WINDOW_NORMAL)
+cv2.namedWindow('Detección de Amarillo', cv2.WINDOW_NORMAL)
+cv2.namedWindow('Detección de Verde', cv2.WINDOW_NORMAL)
 
 while True:
     try:
@@ -23,63 +31,34 @@ while True:
         # Verifica si la imagen se obtuvo correctamente
         if img is None:
             print("No se pudo obtener la imagen.")
-            time.sleep(1)  # Espera antes de reintentar
+            time.sleep(1)
             continue
 
-        # Convertir la imagen a HSV para facilitar la detección de color
+        # Convertir la imagen a espacio de color HSV
         hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
+        # Crear máscaras para cada color
+        masks = {}
         for color, (lower, upper) in color_ranges.items():
-            # Convierte los límites de color a un arreglo de NumPy
             lower_bound = np.array(lower, dtype=np.uint8)
             upper_bound = np.array(upper, dtype=np.uint8)
+            masks[color] = cv2.inRange(hsv, lower_bound, upper_bound)
 
-            # Crear una máscara para el color específico
-            mask = cv2.inRange(hsv, lower_bound, upper_bound)
+        # Mostrar la imagen original y las máscaras para cada color
+        cv2.imshow('ESP32 - Video en Vivo', img)
+        cv2.imshow('Detección de Azul', masks['azul'])
+        cv2.imshow('Detección de Rojo', masks['rojo'])
+        cv2.imshow('Detección de Amarillo', masks['amarillo'])
+        cv2.imshow('Detección de Verde', masks['verde'])
 
-            # Realiza operaciones morfológicas para mejorar la máscara
-            mask = cv2.erode(mask, None, iterations=2)
-            mask = cv2.dilate(mask, None, iterations=2)
-
-            # Encuentra los contornos de las áreas detectadas
-            contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-            
-            for contour in contours:
-                # Ignora los contornos pequeños que pueden ser ruido
-                if cv2.contourArea(contour) < 150:
-                    continue
-
-                # Segundo filtro: Verificar si la figura es circular
-                # Encuentra el área y el perímetro del contorno
-                area = cv2.contourArea(contour)
-                perimeter = cv2.arcLength(contour, True)
-                
-                # Calcular el "circularity" o circularidad
-                # Circularidad = 4 * pi * (area / perimeter^2)
-                if perimeter == 0:
-                    continue
-                circularity = 4 * np.pi * (area / (perimeter * perimeter))
-                
-                # Si la circularidad está cerca de 1, la forma es aproximadamente un círculo
-                if 0.7 < circularity < 1.5:
-                    # Encuentra el contorno y dibuja un círculo alrededor de la pelota detectada
-                    (x, y), radius = cv2.minEnclosingCircle(contour)
-                    center = (int(x), int(y))
-                    radius = int(radius)
-                    cv2.circle(img, center, radius, (0, 255, 0), 2)
-                    cv2.putText(img, f'Pelota {color}', (int(x) - 10, int(y) - 10), 
-                                cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
-
-        # Muestra el video en pantalla
-        cv2.imshow('ESP32 - Detección de Pelotas de Colores y Forma Circular', img)
-
-        # Presiona 'q' para salir
+        # Presiona 'q' para salir del bucle
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 
     except Exception as e:
         print(f"Error al obtener la imagen: {e}")
-        time.sleep(1)  # Espera antes de reintentar
+        time.sleep(1)
         continue
 
+# Cerrar todas las ventanas abiertas al finalizar
 cv2.destroyAllWindows()
