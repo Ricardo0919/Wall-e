@@ -34,7 +34,7 @@ const char* password = "ricki1903#$";
 // Casa
 //const char* mqttServer = "192.168.1.85";
 //TEC
-const char* mqttServer = "10.25.109.41";
+const char* mqttServer = "10.25.102.27";
 const int mqttPort = 1883;
 
 // Instancias de cliente Wi-Fi y MQTT
@@ -67,10 +67,10 @@ void turn() {
   ledcAttachPin(IN4, PWM_CHANNEL2);
   ledcWrite(PWM_CHANNEL2, turnSpeed);
 
-  // Mantener el giro por 4 segundos
-  delay(800);
+  // Mantener el giro por 0.8 segundos
+  delay(1000);
 
-  // Detener los motores después de 4 segundos
+  // Detener los motores después de 0.8 segundos
   digitalWrite(IN1, LOW);   // Apagar Motor1
   digitalWrite(IN2, LOW);   // Apagar Motor1
   digitalWrite(IN3, LOW);   // Apagar Motor2
@@ -78,8 +78,6 @@ void turn() {
 
   ledcWrite(PWM_CHANNEL1, 0);
   ledcWrite(PWM_CHANNEL2, 0);
-
-  mqttClient.publish("esp32/movement", "Start");
 }
 
 
@@ -122,7 +120,7 @@ void measureDistance() {
   if (duration > 0) {
     float distance = (duration / 2.0) * 0.0343;
 
-    if (distance <= 20.0) {
+    if (distance <= 30.0) {
       Serial.print("Distancia: ");
       Serial.print(distance);
       Serial.println(" cm");
@@ -135,11 +133,25 @@ void measureDistance() {
       mqttClient.publish("esp32/object", "Object not found");
 
       // Si la distancia está entre 10 cm y 15 cm, hacer sonar el buzzer
-      if (distance >= 10.0 && distance <= 15.0) {
+      if (distance <= 18.0) {
+        //Motor1
+        digitalWrite(IN1, LOW);
+        digitalWrite(IN2, LOW);
+        //Motor2
+        digitalWrite(IN3, LOW);
+        digitalWrite(IN4, LOW);
+
+        ledcWrite(PWM_CHANNEL1, 0);
+        ledcWrite(PWM_CHANNEL2, 0);
+        
         mqttClient.publish("esp32/object", "Object found");
         digitalWrite(buzzer, HIGH);  // Encender el buzzer
         delay(2000);  // Mantener el buzzer encendido durante 2 segundos
         digitalWrite(buzzer, LOW);   // Apagar el buzzer después de 2 segundos
+
+        turn();
+        forward();
+
       }
 
     } else {
@@ -166,9 +178,6 @@ void callback(char* topic, byte* payload, unsigned int length) {
   if (String(topic) == "esp32/movement") {
     if (message == "Start") {
       start();  // Comenzar medición y mover motores
-    } 
-    else if (message == "Turn") {
-      turn();   // Detener motores y medición
     }
     else if (message == "Stop") {
       stop();   // Detener motores y medición
@@ -189,7 +198,7 @@ void reconnect() {
         } else {
             Serial.print("Fallido, rc=");
             Serial.print(mqttClient.state());
-            Serial.println(" Intentando de nuevo en 5 segundos");
+            Serial.println("Intentando de nuevo en 5 segundos");
             delay(5000);
         }
     }
