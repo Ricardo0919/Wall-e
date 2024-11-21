@@ -1,11 +1,11 @@
 #include <WiFi.h>
 #include <PubSubClient.h>
 
-// Configuración del sensor ultrasónico
-#define TRIG_PIN 2    // Pin de Trig conectado a GPIO 2 del ESP32
-#define ECHO_PIN 15   // Pin de Echo conectado a GPIO 15 del ESP32
+// Ultrasonic sensor configuration
+#define TRIG_PIN 2
+#define ECHO_PIN 15
 
-// Configuración del puente H para los motores
+// H-bridge configuration for robot motors
 #define IN1 23
 #define IN2 22
 #define IN3 16
@@ -14,241 +14,255 @@
 #define FREQ 5000
 #define PWM_CHANNEL1 0
 #define PWM_CHANNEL2 1
-#define PWM_CHANNEL3 2
 #define RESOLUTION 8
-int straightSpeed = 140; 
+int straightSpeed = 140;
 int turnSpeed = 100;
 
 // Buzzer
 #define buzzer 18
 
-// Configuración de la red Wi-Fi
-//Casa
-//const char* ssid = "INFINITUM4B9D_2.4";
-//const char* password = "Wcmg4DjFH9";
-//TEC
+// Claw motor configuration
+#define CLAW_IN1 12  // D12
+#define CLAW_IN2 13  // D13
+
+#define CLAW_PWM_CHANNEL1 2
+#define CLAW_PWM_CHANNEL2 3
+int clawSpeed = 100;
+
+// Wi-Fi configuration
 const char* ssid = "Ricardo";
 const char* password = "ricki1903#$";
 
-// Configuración del broker MQTT
+// MQTT broker configuration
 // Casa
-//const char* mqttServer = "192.168.1.85";
-//TEC
-const char* mqttServer = "10.25.102.27";
+const char* mqttServer = "192.168.1.102";
+// TEC
+//const char* mqttServer = "10.25.100.90";
 const int mqttPort = 1883;
 
-// Instancias de cliente Wi-Fi y MQTT
+// Wi-Fi and MQTT clients
 WiFiClient wifiClient;
 PubSubClient mqttClient(wifiClient);
 
-bool isMeasuring = false;  // Variable para controlar si se está midiendo o no
+bool isMeasuring = false;  // Controls if the robot is moving
+unsigned long lastMeasureTime = 0;
+unsigned long lastMQTTPublishTime = 0;
 
-void forward(){
-  //Motor1
+void setup() {
+  Serial.begin(115200);
+
+  // Initialize pins
+  pinMode(TRIG_PIN, OUTPUT);
+  pinMode(ECHO_PIN, INPUT);
+  pinMode(buzzer, OUTPUT);
+  pinMode(IN1, OUTPUT);
+  pinMode(IN2, OUTPUT);
+  pinMode(IN3, OUTPUT);
+  pinMode(IN4, OUTPUT);
+  pinMode(CLAW_IN1, OUTPUT);
+  pinMode(CLAW_IN2, OUTPUT);
+
+  // Setup PWM channels for robot motors
+  ledcSetup(PWM_CHANNEL1, FREQ, RESOLUTION);
+  ledcSetup(PWM_CHANNEL2, FREQ, RESOLUTION);
   ledcAttachPin(IN1, PWM_CHANNEL1);
+  ledcAttachPin(IN4, PWM_CHANNEL2);
+
+  // Setup PWM channels for claw motors
+  ledcSetup(CLAW_PWM_CHANNEL1, FREQ, RESOLUTION);
+  ledcSetup(CLAW_PWM_CHANNEL2, FREQ, RESOLUTION);
+  ledcAttachPin(CLAW_IN1, CLAW_PWM_CHANNEL1);
+  ledcAttachPin(CLAW_IN2, CLAW_PWM_CHANNEL2);
+
+  // Connect to Wi-Fi
+  WiFi.begin(ssid, password);
+  Serial.print("Connecting to Wi-Fi");
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+  Serial.println("\nConnected to Wi-Fi");
+
+  // Configure MQTT client
+  mqttClient.setServer(mqttServer, mqttPort);
+  mqttClient.setCallback(callback);
+}
+
+void loop() {
+  // Reconnect if MQTT client is disconnected
+  if (!mqttClient.connected()) {
+    reconnect();
+  }
+  mqttClient.loop();
+
+  if (isMeasuring) {
+    measureAndAct();  // Execute measurement and actions only if active
+  }
+}
+
+void forward() {
   ledcWrite(PWM_CHANNEL1, straightSpeed);
   digitalWrite(IN2, LOW);
-
-  //Motor2
   digitalWrite(IN3, LOW);
-  ledcAttachPin(IN4, PWM_CHANNEL2);
   ledcWrite(PWM_CHANNEL2, straightSpeed);
+}
 
+void stopMotors() {
+  digitalWrite(IN1, LOW);
+  digitalWrite(IN2, LOW);
+  digitalWrite(IN3, LOW);
+  digitalWrite(IN4, LOW);
+  ledcWrite(PWM_CHANNEL1, 0);
+  ledcWrite(PWM_CHANNEL2, 0);
 }
 
 void turn() {
-  // Motor1 gira hacia adelante
-  ledcAttachPin(IN1, PWM_CHANNEL1);
   ledcWrite(PWM_CHANNEL1, turnSpeed);
-  digitalWrite(IN2, LOW);   // Apagar la entrada IN2 para que Motor1 gire hacia adelante
-
-  // Motor2 gira hacia atrás
-  digitalWrite(IN3, HIGH);    // Apagar la entrada IN3 para que Motor2 gire hacia atrás
-  ledcAttachPin(IN4, PWM_CHANNEL2);
+  digitalWrite(IN2, LOW);
+  digitalWrite(IN3, HIGH);
   ledcWrite(PWM_CHANNEL2, turnSpeed);
 
-  // Mantener el giro por 0.8 segundos
-  delay(1000);
+  unsigned long startTurn = millis();
+  while (millis() - startTurn < 1000) {
+    mqttClient.loop();  // Process MQTT messages while turning
+  }
 
-  // Detener los motores después de 0.8 segundos
-  digitalWrite(IN1, LOW);   // Apagar Motor1
-  digitalWrite(IN2, LOW);   // Apagar Motor1
-  digitalWrite(IN3, LOW);   // Apagar Motor2
-  digitalWrite(IN4, LOW);   // Apagar Motor2
-
-  ledcWrite(PWM_CHANNEL1, 0);
-  ledcWrite(PWM_CHANNEL2, 0);
+  stopMotors();
 }
 
-
-// Función start para iniciar el movimiento y revisar el comando del tópico turn
-void start() {
-
-  // Activar medición
-  isMeasuring = true;
-  Serial.print("Start");
-  
-  forward();
-}
-
-void stop() {
-  //Motor1
-  digitalWrite(IN1, LOW);
-  digitalWrite(IN2, LOW);
-  //Motor2
-  digitalWrite(IN3, LOW);
-  digitalWrite(IN4, LOW);
-
-  ledcWrite(PWM_CHANNEL1, 0);
-  ledcWrite(PWM_CHANNEL2, 0);
-
-  isMeasuring = false;  // Detener medición
-  mqttClient.publish("esp32/distance", "Measurement has been stopped");
-  mqttClient.publish("esp32/object", "Detection of objects has been stopped");
-}
-
-// Función para medir la distancia con el sensor ultrasónico
-void measureDistance() {
+float measureDistance() {
   digitalWrite(TRIG_PIN, LOW);
   delayMicroseconds(2);
   digitalWrite(TRIG_PIN, HIGH);
   delayMicroseconds(10);
   digitalWrite(TRIG_PIN, LOW);
 
-  long duration = pulseIn(ECHO_PIN, HIGH, 30000); // Timeout de 30ms
-
+  long duration = pulseIn(ECHO_PIN, HIGH, 30000);
   if (duration > 0) {
-    float distance = (duration / 2.0) * 0.0343;
+    return (duration / 2.0) * 0.0343;
+  }
+  return -1;
+}
 
-    if (distance <= 30.0) {
-      Serial.print("Distancia: ");
-      Serial.print(distance);
-      Serial.println(" cm");
+void measureAndAct() {
+  unsigned long currentTime = millis();
+  if (currentTime - lastMeasureTime >= 100) {
+    lastMeasureTime = currentTime;
+    float distance = measureDistance();
 
-      // Publicar la distancia al tópico MQTT
-      String distanceStr = String(distance);
-      mqttClient.publish("esp32/distance", distanceStr.c_str());
+    if (distance > 0 && distance <= 20.0) {
+      Serial.println("Obstacle detected. Turning...");
+      digitalWrite(buzzer, HIGH);
+      delay(500);
+      digitalWrite(buzzer, LOW);
 
-      // Publicar la detección del objeto al tópico MQTT
-      mqttClient.publish("esp32/object", "Object not found");
+      turn();
+      forward();
 
-      // Si la distancia está entre 10 cm y 15 cm, hacer sonar el buzzer
-      if (distance <= 18.0) {
-        //Motor1
-        digitalWrite(IN1, LOW);
-        digitalWrite(IN2, LOW);
-        //Motor2
-        digitalWrite(IN3, LOW);
-        digitalWrite(IN4, LOW);
-
-        ledcWrite(PWM_CHANNEL1, 0);
-        ledcWrite(PWM_CHANNEL2, 0);
-        
-        mqttClient.publish("esp32/object", "Object found");
-        digitalWrite(buzzer, HIGH);  // Encender el buzzer
-        delay(2000);  // Mantener el buzzer encendido durante 2 segundos
-        digitalWrite(buzzer, LOW);   // Apagar el buzzer después de 2 segundos
-
-        turn();
-        forward();
-
+      if (currentTime - lastMQTTPublishTime >= 1000) {
+        lastMQTTPublishTime = currentTime;
+        mqttClient.publish("esp32/distance", String(distance).c_str());
+        mqttClient.publish("esp32/object", "Object detected");
       }
+    } else if (distance > 20.0) {
+      Serial.println("Moving forward");
+      forward();
 
+      if (currentTime - lastMQTTPublishTime >= 1000) {
+        lastMQTTPublishTime = currentTime;
+        mqttClient.publish("esp32/distance", String(distance).c_str());
+        mqttClient.publish("esp32/object", "No obstacles");
+      }
     } else {
       Serial.println("Out of range");
-      mqttClient.publish("esp32/distance", "Out of range");
-      mqttClient.publish("esp32/object", "Object not found");
+      if (currentTime - lastMQTTPublishTime >= 1000) {
+        lastMQTTPublishTime = currentTime;
+        mqttClient.publish("esp32/distance", "Out of range");
+        mqttClient.publish("esp32/object", "Object not found");
+      }
     }
   }
 }
 
-// Función de callback para manejar mensajes MQTT
+void openClaw() {
+  Serial.println("Opening claw...");
+  stopMotors();  // Stop the robot
+  delay(300);    // Wait for 300 ms
+
+  // Send 'Stop' to 'esp32/movement' topic
+  mqttClient.publish("esp32/movement", "Stop");
+
+  // Open the claw
+  stopClaw();
+  digitalWrite(CLAW_IN1, LOW);
+  ledcWrite(CLAW_PWM_CHANNEL2, clawSpeed);
+  delay(2100);  // Changed from 700 to 2100
+  stopClaw();
+
+  // Robot remains stopped after opening the claw
+}
+
+void closeClaw() {
+  Serial.println("Closing claw...");
+  // Close the claw without stopping the robot
+  stopClaw();
+  digitalWrite(CLAW_IN2, LOW);
+  ledcWrite(CLAW_PWM_CHANNEL1, clawSpeed);
+  delay(2100);  // Changed from 700 to 2100
+  stopClaw();
+}
+
+void stopClaw() {
+  ledcWrite(CLAW_PWM_CHANNEL1, 0);
+  ledcWrite(CLAW_PWM_CHANNEL2, 0);
+  digitalWrite(CLAW_IN1, LOW);
+  digitalWrite(CLAW_IN2, LOW);
+}
+
 void callback(char* topic, byte* payload, unsigned int length) {
-  // Convierte el payload a un String
   String message;
-  for (int i = 0; i < length; i++) {
+  for (unsigned int i = 0; i < length; i++) {
     message += (char)payload[i];
   }
-  Serial.print("Mensaje recibido en el tópico [");
+  Serial.print("Received message on topic [");
   Serial.print(topic);
   Serial.print("]: ");
   Serial.println(message);
 
-  // Controlar el motor y la medición según el mensaje recibido
   if (String(topic) == "esp32/movement") {
     if (message == "Start") {
-      start();  // Comenzar medición y mover motores
+      Serial.println("Movement started");
+      isMeasuring = true;  // Activate measurement and movement
+    } else if (message == "Stop") {
+      Serial.println("Movement stopped");
+      isMeasuring = false;  // Stop measurement and movement
+      stopMotors();
+
+      // Publish messages indicating measurement and detection have stopped
+      mqttClient.publish("esp32/distance", "Measurement has been stopped");
+      mqttClient.publish("esp32/object", "Detection of objects has been stopped");
     }
-    else if (message == "Stop") {
-      stop();   // Detener motores y medición
+  } else if (String(topic) == "esp32/claw") {
+    if (message == "Open") {
+      openClaw();
+    } else if (message == "Close") {
+      closeClaw();
     }
   }
-  
 }
 
-// Conectar al broker MQTT
 void reconnect() {
-    while (!mqttClient.connected()) {
-        Serial.print("Intentando conectar al broker MQTT...");
-        if (mqttClient.connect("ESP32Client")) {
-            Serial.println("Conectado");
-            // Suscribirse a los tópicos de los motores
-            mqttClient.subscribe("esp32/movement");
-            mqttClient.subscribe("esp32/turn");
-        } else {
-            Serial.print("Fallido, rc=");
-            Serial.print(mqttClient.state());
-            Serial.println("Intentando de nuevo en 5 segundos");
-            delay(5000);
-        }
+  while (!mqttClient.connected()) {
+    Serial.print("Attempting MQTT connection...");
+    if (mqttClient.connect("ESP32Client")) {
+      Serial.println("Connected");
+      mqttClient.subscribe("esp32/movement");
+      mqttClient.subscribe("esp32/claw");
+    } else {
+      Serial.print("Failed, rc=");
+      Serial.print(mqttClient.state());
+      Serial.println(" trying again in 5 seconds");
+      delay(5000);
     }
-}
-
-void setup() {
-    // Inicializar el puerto serie
-    Serial.begin(115200);
-
-    // Configurar el sensor ultrasónico
-    pinMode(TRIG_PIN, OUTPUT);
-    pinMode(ECHO_PIN, INPUT);
-
-    // Configurar el buzzer
-    pinMode(buzzer, OUTPUT);  // Configurar el buzzer como salida
-
-    // Configurar los pines de control de los motores
-    pinMode(IN1, OUTPUT);
-    pinMode(IN2, OUTPUT);
-    pinMode(IN3, OUTPUT);
-    pinMode(IN4, OUTPUT);
-
-    ledcSetup(PWM_CHANNEL1, FREQ, RESOLUTION);
-    ledcSetup(PWM_CHANNEL2, FREQ, RESOLUTION);
-
-
-    // Conectar a la red Wi-Fi
-    WiFi.begin(ssid, password);
-    while (WiFi.status() != WL_CONNECTED) {
-        delay(500);
-        Serial.print(".");
-    }
-    Serial.println("Conectado a Wi-Fi");
-
-    // Configurar el servidor MQTT
-    mqttClient.setServer(mqttServer, mqttPort);
-    mqttClient.setCallback(callback);
-}
-
-
-void loop() {
-  if (!mqttClient.connected()) {
-    reconnect();
   }
-  mqttClient.loop();
-
-  // Si se está midiendo, continuar midiendo y publicando la distancia
-  if (isMeasuring) {
-    measureDistance();
-  }
-
-  delay(500);  // Esperar medio segundo antes de la próxima medición
 }
