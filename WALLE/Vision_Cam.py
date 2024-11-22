@@ -15,7 +15,7 @@ mqtt_client = mqtt.Client()
 mqtt_client.connect(broker, port, 60)
 
 # URL del stream de la cámara ESP32 (ajusta la IP a la de tu ESP32)
-url = 'http://192.168.137.186/capture'  # Cambia la URL según sea necesario
+url = 'http://192.168.137.123/capture'  # Cambia la URL según sea necesario
 
 # Define los rangos de color en HSV para los cubos de color
 color_ranges = {
@@ -74,57 +74,42 @@ def detectar_cubos(img, color_ranges):
                                     cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
                         ##########################################################################################
                         # Detener cualquier movimiento previo y notificar detección
-                        mqtt_client.publish(movement_topic, "Stop")
+                        mqtt_client.publish("esp32/movement", "Stop")
                         print(f"Detectado cubo de color {color}. Iniciando acercamiento.")
 
-                        # Calcular posición relativa del cubo y el centro del marco
-                        cx = x + w // 2  # Centro del cubo en el eje x
-                        frame_center = img.shape[1] // 2  # Centro del marco en el eje x
+                        # Publicar en el tópico "esp32/found_object" para activar la lógica en el ESP32
+                        mqtt_client.publish("esp32/found_object", "Start")
+                        print("Comando enviado al ESP32 para iniciar el acercamiento.")
 
-                        # Inicializar parámetros de control
-                        max_speed = 50  # Velocidad máxima del robot (ajustar según hardware)
-                        k_p = 0.1  # Ganancia proporcional para la alineación
-                        approach_threshold = 70  # Umbral de área mínima para detenerse
-                        min_speed_factor = 0.5  # Factor de reducción mínima de velocidad (por cercanía)
+                        # Publicar datos dinámicos mientras el ESP32 realiza el acercamiento
+                        approach_complete = False
+                        while not approach_complete:
+                            # Calcular posición relativa del cubo
+                            cx = x + w // 2  # Centro del cubo en el eje x
+                            bounding_box_area = w * h  # Área del bounding box
 
-                        # Bucle para ajustar dirección y velocidad dinámicamente
-                        while True:
-                            # Error de alineación basado en la diferencia entre centros
-                            alignment_error = frame_center - cx
+                            # Enviar datos al ESP32
+                            mqtt_client.publish("esp32/found_object_center", str(cx))
+                            mqtt_client.publish("esp32/found_object_area", str(bounding_box_area))
 
-                            # Ajustar velocidades proporcionales al error de alineación
-                            left_motor_speed = max_speed - k_p * alignment_error
-                            right_motor_speed = max_speed + k_p * alignment_error
+                            print(f"Enviando datos: centro={cx}, área={bounding_box_area}")
 
-                            # Normalizar velocidades para estar en el rango permitido
-                            left_motor_speed = max(0, min(max_speed, left_motor_speed))
-                            right_motor_speed = max(0, min(max_speed, right_motor_speed))
+                            # Verificar si el área supera el umbral de detección
+                            if bounding_box_area > 500:  # Ajusta este valor al mismo umbral en el ESP32
+                                print("Cubo suficientemente cerca. Deteniendo acercamiento.")
+                                mqtt_client.publish("esp32/found_object", "Stop")  # Detener el ESP32
+                                approach_complete = True
 
-                            # Calcular el factor de reducción según el tamaño del cubo (distancia aparente)
-                            bounding_box_area = w * h
-                            distance_factor = max(min_speed_factor, min(1.0, 1.0 / bounding_box_area))
-                            left_motor_speed *= distance_factor
-                            right_motor_speed *= distance_factor
-
-                            # Publicar velocidades calculadas por MQTT
-                            mqtt_client.publish(movement_topic, f"LEFT:{int(left_motor_speed)}")
-                            mqtt_client.publish(movement_topic, f"RIGHT:{int(right_motor_speed)}")
-
-                            # Detenerse si el cubo ocupa suficiente área en la imagen
-                            if bounding_box_area > approach_threshold:
-                                print("Robot suficientemente cerca del cubo. Deteniendo movimiento.")
-                                mqtt_client.publish(movement_topic, "Stop")
-                                break
-
-                            # Esperar un breve intervalo antes de recalcular
+                            # Esperar un breve tiempo antes de recalcular
                             time.sleep(0.1)
 
                         # Operar la garra después de detenerse
                         print("Activando garra para recoger el cubo.")
-                        mqtt_client.publish(claw_topic, "Open")
+                        mqtt_client.publish("esp32/claw", "Open")
                         time.sleep(1)  # Tiempo para abrir la garra
-                        mqtt_client.publish(claw_topic, "Close")
+                        mqtt_client.publish("esp32/claw", "Close")
                         print("Cubo recogido con éxito.")
+
 
 
     return img
