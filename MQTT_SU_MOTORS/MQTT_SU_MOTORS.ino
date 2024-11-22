@@ -35,9 +35,9 @@ const char* password = "ricki1903#$";
 
 // MQTT broker configuration
 // Casa
-const char* mqttServer = "192.168.1.102";
+//const char* mqttServer = "192.168.1.102";
 // TEC
-//const char* mqttServer = "10.25.100.90";
+const char* mqttServer = "10.25.99.84";
 const int mqttPort = 1883;
 
 // Wi-Fi and MQTT clients

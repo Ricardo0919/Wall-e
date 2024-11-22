@@ -2,9 +2,20 @@ import cv2
 import urllib.request
 import numpy as np
 import time
+import paho.mqtt.client as mqtt # type: ignore
+
+# Configuración MQTT
+broker = "10.25.99.84"  # Dirección IP del broker MQTT (cambia según sea necesario)
+port = 1883
+movement_topic = "esp32/movement"
+claw_topic = "esp32/claw"
+
+# Inicializa el cliente MQTT
+mqtt_client = mqtt.Client()
+mqtt_client.connect(broker, port, 60)
 
 # URL del stream de la cámara ESP32 (ajusta la IP a la de tu ESP32)
-url = 'http://192.168.137.135/capture'  # Cambia la URL según sea necesario
+url = 'http://192.168.137.229/capture'  # Cambia la URL según sea necesario
 
 # Define los rangos de color en HSV para los cubos de color
 color_ranges = {
@@ -61,6 +72,61 @@ def detectar_cubos(img, color_ranges):
                         cv2.drawContours(img, [approx], -1, (0, 255, 0), 2)
                         cv2.putText(img, f'Cubo {color}', (x, y - 10), 
                                     cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
+                        ##########################################################################################
+                        # Envía señales para detener cualquier movimiento previo
+                        mqtt_client.publish(movement_topic, "Stop")
+                        print(f"Detectado cubo de color {color}. Acercándose y activando la garra.")
+
+                        # Calcula el centro del cubo
+                        cx = x + w // 2
+                        cy = y + h // 2
+
+                        # Calcula el centro del marco
+                        frame_center = img.shape[1] // 2  # Ancho del marco / 2
+
+                        # Inicializa variables de control
+                        max_speed = 100  # Velocidad máxima del robot (ajusta según hardware)
+                        k_p = 0.1  # Ganancia proporcional para alineación
+                        approach_threshold = 50  # Umbral mínimo para detenerse (área del cubo o distancia)
+                        distance_reduction_factor = 0.5  # Factor de reducción mínima de velocidad
+
+                        # Bucle para mover el robot hacia el cubo
+                        while True:
+                            # Calcula el error de alineación
+                            alignment_error = frame_center - cx
+
+                            # Calcula velocidades proporcionales al error
+                            left_motor_speed = max_speed - k_p * alignment_error
+                            right_motor_speed = max_speed + k_p * alignment_error
+
+                            # Normaliza las velocidades
+                            left_motor_speed = max(0, min(max_speed, left_motor_speed))
+                            right_motor_speed = max(0, min(max_speed, right_motor_speed))
+
+                            # Usa el área del bounding box para reducir la velocidad gradualmente
+                            bounding_box_area = w * h
+                            distance_factor = max(distance_reduction_factor, min(1.0, 1.0 / bounding_box_area))
+                            left_motor_speed *= distance_factor
+                            right_motor_speed *= distance_factor
+
+                            # Publica las velocidades por MQTT
+                            mqtt_client.publish(movement_topic, f"LEFT:{int(left_motor_speed)}")
+                            mqtt_client.publish(movement_topic, f"RIGHT:{int(right_motor_speed)}")
+
+                            # Verifica si el robot está lo suficientemente cerca para detenerse
+                            if bounding_box_area > approach_threshold:
+                                print("El robot está suficientemente cerca del cubo. Deteniéndose.")
+                                mqtt_client.publish(movement_topic, "Stop")
+                                break
+
+                            # Simula tiempo de espera para el siguiente ajuste
+                            time.sleep(0.1)
+
+                        # Detiene el movimiento y activa la garra
+                        mqtt_client.publish(movement_topic, "Stop")
+                        mqtt_client.publish(claw_topic, "Open")
+                        time.sleep(1)  # Espera para abrir la garra
+                        mqtt_client.publish(claw_topic, "Close")
 
     return img
 
@@ -81,7 +147,7 @@ while True:
         img = detectar_cubos(img, color_ranges)
 
         # Muestra el video en pantalla
-        cv2.imshow('ESP32 - Detección de Cubos de Colores Mejorada', img)
+        cv2.imshow('ESP32 - Detección y Recogida de Cubos', img)
 
         # Presiona 'q' para salir
         if cv2.waitKey(1) & 0xFF == ord('q'):
@@ -93,3 +159,4 @@ while True:
         continue
 
 cv2.destroyAllWindows()
+mqtt_client.disconnect()
