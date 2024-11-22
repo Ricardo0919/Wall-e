@@ -1,11 +1,11 @@
-import cv2
+import cv2 # type: ignore
 import urllib.request
-import numpy as np
+import numpy as np # type: ignore
 import time
 import paho.mqtt.client as mqtt # type: ignore
 
 # Configuración MQTT
-broker = "10.25.99.84"  # Dirección IP del broker MQTT (cambia según sea necesario)
+broker = "10.25.100.90"  # Dirección IP del broker MQTT (cambia según sea necesario)
 port = 1883
 movement_topic = "esp32/movement"
 claw_topic = "esp32/claw"
@@ -15,7 +15,7 @@ mqtt_client = mqtt.Client()
 mqtt_client.connect(broker, port, 60)
 
 # URL del stream de la cámara ESP32 (ajusta la IP a la de tu ESP32)
-url = 'http://192.168.137.229/capture'  # Cambia la URL según sea necesario
+url = 'http://192.168.137.186/capture'  # Cambia la URL según sea necesario
 
 # Define los rangos de color en HSV para los cubos de color
 color_ranges = {
@@ -73,60 +73,59 @@ def detectar_cubos(img, color_ranges):
                         cv2.putText(img, f'Cubo {color}', (x, y - 10), 
                                     cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
                         ##########################################################################################
-                        # Envía señales para detener cualquier movimiento previo
+                        # Detener cualquier movimiento previo y notificar detección
                         mqtt_client.publish(movement_topic, "Stop")
-                        print(f"Detectado cubo de color {color}. Acercándose y activando la garra.")
+                        print(f"Detectado cubo de color {color}. Iniciando acercamiento.")
 
-                        # Calcula el centro del cubo
-                        cx = x + w // 2
-                        cy = y + h // 2
+                        # Calcular posición relativa del cubo y el centro del marco
+                        cx = x + w // 2  # Centro del cubo en el eje x
+                        frame_center = img.shape[1] // 2  # Centro del marco en el eje x
 
-                        # Calcula el centro del marco
-                        frame_center = img.shape[1] // 2  # Ancho del marco / 2
+                        # Inicializar parámetros de control
+                        max_speed = 50  # Velocidad máxima del robot (ajustar según hardware)
+                        k_p = 0.1  # Ganancia proporcional para la alineación
+                        approach_threshold = 70  # Umbral de área mínima para detenerse
+                        min_speed_factor = 0.5  # Factor de reducción mínima de velocidad (por cercanía)
 
-                        # Inicializa variables de control
-                        max_speed = 100  # Velocidad máxima del robot (ajusta según hardware)
-                        k_p = 0.1  # Ganancia proporcional para alineación
-                        approach_threshold = 50  # Umbral mínimo para detenerse (área del cubo o distancia)
-                        distance_reduction_factor = 0.5  # Factor de reducción mínima de velocidad
-
-                        # Bucle para mover el robot hacia el cubo
+                        # Bucle para ajustar dirección y velocidad dinámicamente
                         while True:
-                            # Calcula el error de alineación
+                            # Error de alineación basado en la diferencia entre centros
                             alignment_error = frame_center - cx
 
-                            # Calcula velocidades proporcionales al error
+                            # Ajustar velocidades proporcionales al error de alineación
                             left_motor_speed = max_speed - k_p * alignment_error
                             right_motor_speed = max_speed + k_p * alignment_error
 
-                            # Normaliza las velocidades
+                            # Normalizar velocidades para estar en el rango permitido
                             left_motor_speed = max(0, min(max_speed, left_motor_speed))
                             right_motor_speed = max(0, min(max_speed, right_motor_speed))
 
-                            # Usa el área del bounding box para reducir la velocidad gradualmente
+                            # Calcular el factor de reducción según el tamaño del cubo (distancia aparente)
                             bounding_box_area = w * h
-                            distance_factor = max(distance_reduction_factor, min(1.0, 1.0 / bounding_box_area))
+                            distance_factor = max(min_speed_factor, min(1.0, 1.0 / bounding_box_area))
                             left_motor_speed *= distance_factor
                             right_motor_speed *= distance_factor
 
-                            # Publica las velocidades por MQTT
+                            # Publicar velocidades calculadas por MQTT
                             mqtt_client.publish(movement_topic, f"LEFT:{int(left_motor_speed)}")
                             mqtt_client.publish(movement_topic, f"RIGHT:{int(right_motor_speed)}")
 
-                            # Verifica si el robot está lo suficientemente cerca para detenerse
+                            # Detenerse si el cubo ocupa suficiente área en la imagen
                             if bounding_box_area > approach_threshold:
-                                print("El robot está suficientemente cerca del cubo. Deteniéndose.")
+                                print("Robot suficientemente cerca del cubo. Deteniendo movimiento.")
                                 mqtt_client.publish(movement_topic, "Stop")
                                 break
 
-                            # Simula tiempo de espera para el siguiente ajuste
+                            # Esperar un breve intervalo antes de recalcular
                             time.sleep(0.1)
 
-                        # Detiene el movimiento y activa la garra
-                        mqtt_client.publish(movement_topic, "Stop")
+                        # Operar la garra después de detenerse
+                        print("Activando garra para recoger el cubo.")
                         mqtt_client.publish(claw_topic, "Open")
-                        time.sleep(1)  # Espera para abrir la garra
+                        time.sleep(1)  # Tiempo para abrir la garra
                         mqtt_client.publish(claw_topic, "Close")
+                        print("Cubo recogido con éxito.")
+
 
     return img
 
