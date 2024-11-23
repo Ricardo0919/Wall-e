@@ -145,27 +145,6 @@
         "wires": []
     },
     {
-        "id": "df902f54eee2a561",
-        "type": "mqtt in",
-        "z": "e1a7e71d7b85c854",
-        "name": "",
-        "topic": "esp32/object",
-        "qos": "2",
-        "datatype": "auto-detect",
-        "broker": "947aa3e7ca25c668",
-        "nl": false,
-        "rap": true,
-        "rh": 0,
-        "inputs": 0,
-        "x": 270,
-        "y": 280,
-        "wires": [
-            [
-                "4a371b835b59a266"
-            ]
-        ]
-    },
-    {
         "id": "963a18c80bbdc04a",
         "type": "ui_button",
         "z": "e1a7e71d7b85c854",
@@ -297,10 +276,12 @@
         "topic": "topic",
         "topicType": "msg",
         "className": "",
-        "x": 490,
+        "x": 290,
         "y": 280,
         "wires": [
-            []
+            [
+                "a0c5e136fffef2a6"
+            ]
         ]
     },
     {
@@ -323,6 +304,24 @@
         "wires": [
             []
         ]
+    },
+    {
+        "id": "a0c5e136fffef2a6",
+        "type": "mqtt out",
+        "z": "e1a7e71d7b85c854",
+        "name": "",
+        "topic": "esp32/object",
+        "qos": "",
+        "retain": "",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "947aa3e7ca25c668",
+        "x": 510,
+        "y": 280,
+        "wires": []
     },
     {
         "id": "c23dc8d241ddbc9c",
