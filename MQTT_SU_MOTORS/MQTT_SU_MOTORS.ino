@@ -15,8 +15,8 @@
 #define PWM_CHANNEL1 0
 #define PWM_CHANNEL2 1
 #define RESOLUTION 8
-int straightSpeed = 140;
-int turnSpeed = 100;
+int straightSpeed = 70;
+int turnSpeed = 50;
 
 // Buzzer
 #define buzzer 18
@@ -37,7 +37,7 @@ const char* password = "ricki1903#$";
 // Casa
 //const char* mqttServer = "192.168.1.102";
 // TEC
-const char* mqttServer = "10.25.99.84";
+const char* mqttServer = "10.25.100.90";
 const int mqttPort = 1883;
 
 // Wi-Fi and MQTT clients
@@ -218,7 +218,49 @@ void stopClaw() {
   digitalWrite(CLAW_IN1, LOW);
   digitalWrite(CLAW_IN2, LOW);
 }
+///////////////////////////////////////////////////////////////////////////////////
+void foundObject() {
+  int alignmentError = 0;
+  int frameCenter = 160;  // Suponiendo un ancho de imagen de 320 píxeles (ajustar si es necesario)
+  int objectCenter = 0;   // Este valor debe ser recibido como parámetro por MQTT
+  int boundingBoxArea = 0;  // Simulación de un área del objeto (debería ser recibido o calculado)
+  int approachThreshold = 500;  // Umbral para detenerse
 
+  // Suponiendo que estos valores se ajusten dinámicamente con mensajes MQTT
+  while (true) {
+    // Ejemplo: lógica simulada
+    alignmentError = frameCenter - objectCenter;  // Corregir orientación
+    if (alignmentError > 10) {
+      // Giro a la izquierda
+      Serial.println("Corrigiendo orientación: girando a la izquierda");
+      ledcWrite(PWM_CHANNEL1, 20);  // Reducir velocidad
+      ledcWrite(PWM_CHANNEL2, 0);
+    } else if (alignmentError < -10) {
+      // Giro a la derecha
+      Serial.println("Corrigiendo orientación: girando a la derecha");
+      ledcWrite(PWM_CHANNEL1, 0);
+      ledcWrite(PWM_CHANNEL2, 20);
+    } else {
+      // Movimiento recto
+      Serial.println("Avanzando hacia el objeto");
+      forward();
+    }
+
+    // Simulación de área de un bounding box (debería actualizarse dinámicamente)
+    boundingBoxArea += 10;  // Aumentar progresivamente para simular acercamiento
+
+    // Si el área supera el umbral, detenerse
+    if (boundingBoxArea > approachThreshold) {
+      Serial.println("Objeto alcanzado. Deteniéndose.");
+      stopMotors();
+      break;
+    }
+
+    delay(500);  // Pausa para simular tiempo de cálculo
+  }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////
 void callback(char* topic, byte* payload, unsigned int length) {
   String message;
   for (unsigned int i = 0; i < length; i++) {
@@ -248,6 +290,9 @@ void callback(char* topic, byte* payload, unsigned int length) {
     } else if (message == "Close") {
       closeClaw();
     }
+  } else if (String(topic) == "esp32/found_object") {
+    Serial.println("Tópico de acercamiento activado.");
+    foundObject();  // Llama a la función para acercarse al objeto
   }
 }
 
@@ -258,6 +303,7 @@ void reconnect() {
       Serial.println("Connected");
       mqttClient.subscribe("esp32/movement");
       mqttClient.subscribe("esp32/claw");
+      mqttClient.subscribe("esp32/found_object"); 
     } else {
       Serial.print("Failed, rc=");
       Serial.print(mqttClient.state());
