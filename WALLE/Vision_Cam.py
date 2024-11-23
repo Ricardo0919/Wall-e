@@ -5,7 +5,7 @@ import time
 import paho.mqtt.client as mqtt # type: ignore
 
 # Configuración MQTT
-broker = "192.168.209.2"  # Dirección IP del broker MQTT (cambia según sea necesario)
+broker = "10.25.100.90"  # Dirección IP del broker MQTT (cambia según sea necesario)
 port = 1883
 movement_topic = "esp32/movement"
 claw_topic = "esp32/claw"
@@ -15,7 +15,7 @@ mqtt_client = mqtt.Client()
 mqtt_client.connect(broker, port, 60)
 
 # URL del stream de la cámara ESP32 (ajusta la IP a la de tu ESP32)
-url = 'http://192.168.137.111/capture'  # Cambia la URL según sea necesario
+url = 'http://192.168.209.185/capture'  # Cambia la URL según sea necesario
 
 # Define los rangos de color en HSV para los cubos de color
 color_ranges = {
