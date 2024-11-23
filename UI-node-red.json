@@ -145,30 +145,6 @@
         "wires": []
     },
     {
-        "id": "0a0dd999fc31db84",
-        "type": "ui_text_input",
-        "z": "e1a7e71d7b85c854",
-        "name": "",
-        "label": "Object",
-        "tooltip": "",
-        "group": "c23dc8d241ddbc9c",
-        "order": 1,
-        "width": 0,
-        "height": 0,
-        "passthru": true,
-        "mode": "text",
-        "delay": 300,
-        "topic": "topic",
-        "sendOnBlur": true,
-        "className": "",
-        "topicType": "msg",
-        "x": 450,
-        "y": 280,
-        "wires": [
-            []
-        ]
-    },
-    {
         "id": "df902f54eee2a561",
         "type": "mqtt in",
         "z": "e1a7e71d7b85c854",
@@ -185,7 +161,7 @@
         "y": 280,
         "wires": [
             [
-                "0a0dd999fc31db84"
+                "4a371b835b59a266"
             ]
         ]
     },
@@ -282,15 +258,80 @@
         "wires": []
     },
     {
+        "id": "4a371b835b59a266",
+        "type": "ui_dropdown",
+        "z": "e1a7e71d7b85c854",
+        "name": "",
+        "label": "Selecciona un color",
+        "tooltip": "",
+        "place": "Select option",
+        "group": "c23dc8d241ddbc9c",
+        "order": 0,
+        "width": 0,
+        "height": 0,
+        "passthru": true,
+        "multiple": false,
+        "options": [
+            {
+                "label": "Amarillo",
+                "value": "amarillo",
+                "type": "str"
+            },
+            {
+                "label": "Rojo",
+                "value": "rojo",
+                "type": "str"
+            },
+            {
+                "label": "Azul",
+                "value": "azul",
+                "type": "str"
+            },
+            {
+                "label": "Café",
+                "value": "cafe",
+                "type": "str"
+            }
+        ],
+        "payload": "",
+        "topic": "topic",
+        "topicType": "msg",
+        "className": "",
+        "x": 490,
+        "y": 280,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "131c9140418fb854",
+        "type": "ui_template",
+        "z": "e1a7e71d7b85c854",
+        "group": "c23dc8d241ddbc9c",
+        "name": "",
+        "order": 4,
+        "width": 0,
+        "height": 0,
+        "format": "<div ng-bind-html=\"msg.payload\"></div>\n<style>\n    /* Cambiar color de fondo del dashboard */\n    body {\n        background-color: #f0f0f0;\n        /* Color gris claro */\n        font-family: Arial, sans-serif;\n    }\n\n    /* Estilizar los botones */\n    .md-button {\n        background-color: #007bff;\n        /* Azul */\n        color: white;\n        border-radius: 8px;\n        font-weight: bold;\n    }\n\n    .md-button:hover {\n        background-color: #0056b3;\n        /* Azul oscuro */\n    }\n\n    /* Personalizar el título de los grupos */\n    .nr-dashboard-cardtitle {\n        color: #ff5722;\n        /* Naranja */\n        font-size: 18px;\n        font-weight: bold;\n    }\n\n    /* Cambiar estilos del dropdown */\n    .nr-dashboard-dropdown {\n        background-color: #ffffff;\n        /* Fondo blanco */\n        border: 1px solid #ddd;\n        border-radius: 5px;\n        padding: 5px;\n    }\n\n    /* Estilizar el texto */\n    .nr-dashboard-text {\n        font-size: 16px;\n        color: #333333;\n        /* Texto gris oscuro */\n    }\n\n    @media (max-width: 600px) {\n  body {\n    background-color: #e0e0e0; /* Cambiar fondo en pantallas pequeñas */\n  }\n  .md-button {\n    font-size: 14px; /* Botones más pequeños */\n  }\n}\n\n</style>",
+        "storeOutMessages": true,
+        "fwdInMessages": true,
+        "resendOnRefresh": true,
+        "templateScope": "local",
+        "className": "",
+        "x": 540,
+        "y": 80,
+        "wires": [
+            []
+        ]
+    },
+    {
         "id": "c23dc8d241ddbc9c",
         "type": "ui_group",
-        "name": "Wall-e",
+        "name": "Group 1",
         "tab": "3b499c3a5dd489da",
         "order": 1,
         "disp": true,
-        "width": "6",
-        "collapse": false,
-        "className": ""
+        "width": 6
     },
     {
         "id": "947aa3e7ca25c668",
@@ -337,11 +378,9 @@
     {
         "id": "3b499c3a5dd489da",
         "type": "ui_tab",
-        "name": "Home",
+        "name": "Tab 1",
         "icon": "dashboard",
-        "order": 1,
-        "disabled": false,
-        "hidden": false
+        "order": 1
     },
     {
         "id": "4708eb48585d771d",
