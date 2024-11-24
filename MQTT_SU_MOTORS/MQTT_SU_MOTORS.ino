@@ -288,7 +288,9 @@ void callback(char* topic, byte* payload, unsigned int length) {
     }
   } else if (String(topic) == "esp32/foundObject") {
     Serial.println("Tópico de acercamiento activado.");
-    foundObject();  // Llama a la función para acercarse al objeto
+    if (message == "Start") {
+      foundObject();
+    }
   }
 }
 
