@@ -289,12 +289,6 @@ void callback(char* topic, byte* payload, unsigned int length) {
   } else if (String(topic) == "esp32/foundObject") {
     Serial.println("Tópico de acercamiento activado.");
     foundObject();  // Llama a la función para acercarse al objeto
-  }else if (String(topic) == "esp32/foundObjectCenter") {
-    int objectCenter = message.toInt(); // Convierte el mensaje a entero
-    // Usa `objectCenter` para ajustar la orientación
-  } else if (String(topic) == "esp32/foundObjectArea") {
-    int boundingBoxArea = message.toInt(); // Convierte el mensaje a entero
-    // Usa `boundingBoxArea` para controlar la distancia
   }
 }
 

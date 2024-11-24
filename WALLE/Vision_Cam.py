@@ -3,6 +3,10 @@ import urllib.request
 import numpy as np # type: ignore
 import time
 import paho.mqtt.client as mqtt # type: ignore
+import flask_server
+
+flask_server.iniciar_servidor()
+print("Servidor Flask iniciado en http://localhost:5000/video")
 
 # Configuración MQTT
 broker = "192.168.209.2"  # Dirección IP del broker MQTT (cambia según sea necesario)
@@ -133,6 +137,7 @@ while True:
 
         # Detectar cubos en la imagen
         img = detectar_cubos(img, color_ranges)
+        flask_server.update_frame(img)
 
         # Muestra el video en pantalla
         cv2.imshow('ESP32 - Detección y Recogida de Cubos', img)
