@@ -3,7 +3,7 @@ import urllib.request
 import numpy as np
 
 # URL del stream de la cámara ESP32
-url = 'http://192.168.137.3/capture'  # Cambia la IP si es necesario
+url = 'http://192.168.209.185/capture'  # Cambia la IP si es necesario
 
 # Función vacía para los sliders
 def nothing(x):

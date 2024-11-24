@@ -3,6 +3,10 @@ import urllib.request
 import numpy as np # type: ignore
 import time
 import paho.mqtt.client as mqtt # type: ignore
+import flask_server
+
+flask_server.iniciar_servidor()
+print("Servidor Flask iniciado en http://localhost:5000/video")
 
 # Configuración MQTT
 broker = "192.168.209.2"  # Dirección IP del broker MQTT (cambia según sea necesario)
@@ -15,7 +19,7 @@ mqtt_client = mqtt.Client()
 mqtt_client.connect(broker, port, 60)
 
 # URL del stream de la cámara ESP32 (ajusta la IP a la de tu ESP32)
-url = 'http://192.168.137.111/capture'  # Cambia la URL según sea necesario
+url = 'http://192.168.209.185/capture'  # Cambia la URL según sea necesario
 
 # Define los rangos de color en HSV para los cubos de color
 color_ranges = {
@@ -129,6 +133,7 @@ while True:
 
         # Detectar cubos en la imagen
         img = detectar_cubos(img, color_ranges)
+        flask_server.update_frame(img)
 
         # Muestra el video en pantalla
         cv2.imshow('ESP32 - Detección y Recogida de Cubos', img)
