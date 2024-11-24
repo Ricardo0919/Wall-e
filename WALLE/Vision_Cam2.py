@@ -9,20 +9,24 @@ import os
 broker = "192.168.209.2"  # Dirección IP del broker MQTT
 port = 1883
 object_topic = "esp32/object"  # Tópico para recibir el color del cubo a buscar
+movement_topic = "esp32/movement"  # Tópico para enviar la señal de "Stop"
+found_object_topic = "esp32/foundObject"  # Tópico para enviar la señal de "Start"
 
 # Inicializa el cliente MQTT
 mqtt_client = mqtt.Client()
 
 # Variable global para el color objetivo
 color_objetivo = None
+cube_found = False  # Control para evitar mensajes repetidos
 
 # Callback para manejar mensajes del tópico
 def on_message(client, userdata, message):
-    global color_objetivo
+    global color_objetivo, cube_found
     try:
         color_objetivo = message.payload.decode('utf-8').lower()
         if color_objetivo in color_ranges:
             print(f"Color objetivo actualizado a: {color_objetivo}")
+            cube_found = False  # Reinicia el estado de búsqueda al cambiar el color
         else:
             print(f"Color recibido '{color_objetivo}' no es válido.")
             color_objetivo = None  # Resetea si no es un color válido
@@ -68,6 +72,8 @@ cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)  # Crea una única ventana ajust
 
 def detectar_cubos(img, color_objetivo):
     """Detecta cubos de un color específico en una imagen."""
+    global cube_found
+
     # Verifica si hay un color objetivo definido
     if color_objetivo not in color_ranges:
         print("No hay un color objetivo válido definido.")
@@ -120,6 +126,12 @@ def detectar_cubos(img, color_objetivo):
                 cv2.putText(img, f'Cubo {color_objetivo}', (x, y - 10),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
                 print(f"Cubo {color_objetivo} detectado en posición ({x}, {y}).")
+
+                # Enviar mensajes MQTT si no se han enviado ya
+                if not cube_found:
+                    mqtt_client.publish(movement_topic, "Stop")
+                    mqtt_client.publish(found_object_topic, "Start")
+                    cube_found = True  # Marca que ya se encontró el cubo
 
     return img
 

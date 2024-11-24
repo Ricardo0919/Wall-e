@@ -290,9 +290,11 @@ void callback(char* topic, byte* payload, unsigned int length) {
     } else if (message == "Close") {
       closeClaw();
     }
-  } else if (String(topic) == "esp32/found_object") {
+  } else if (String(topic) == "esp32/foundObject") {
     Serial.println("Tópico de acercamiento activado.");
-    foundObject();  // Llama a la función para acercarse al objeto
+    if (message == "Start") {
+      foundObject();  // Llama a la función para acercarse al objeto
+    }
   }
 }
 
