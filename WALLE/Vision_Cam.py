@@ -5,7 +5,7 @@ import time
 import paho.mqtt.client as mqtt # type: ignore
 
 # Configuración MQTT
-broker = "10.25.100.90"  # Dirección IP del broker MQTT (cambia según sea necesario)
+broker = "192.168.209.2"  # Dirección IP del broker MQTT (cambia según sea necesario)
 port = 1883
 movement_topic = "esp32/movement"
 claw_topic = "esp32/claw"
@@ -23,6 +23,10 @@ color_ranges = {
     'azul': ([63, 51, 45], [134, 187, 255]),       # Azul
     'amarillo': ([15, 52, 151], [39, 255, 255])    # Amarillo
 }
+
+# Configuración de ventana única
+window_name = "ESP32 - Detección y Recogida de Cubos"
+cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)  # Ventana única ajustable
 
 def detectar_cubos(img, color_ranges):
     """Detecta cubos en una imagen según los rangos de color especificados."""
