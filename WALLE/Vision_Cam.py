@@ -28,6 +28,10 @@ color_ranges = {
     'amarillo': ([15, 52, 151], [39, 255, 255])    # Amarillo
 }
 
+# Configuración de ventana única
+window_name = "ESP32 - Detección y Recogida de Cubos"
+cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)  # Ventana única ajustable
+
 def detectar_cubos(img, color_ranges):
     """Detecta cubos en una imagen según los rangos de color especificados."""
     # Convertir la imagen a HSV para facilitar la detección de color
