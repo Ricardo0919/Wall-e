@@ -1,6 +1,6 @@
 [
     {
-        "id": "e1a7e71d7b85c854",
+        "id": "c0905e8386e7a6dc",
         "type": "tab",
         "label": "Wall-e",
         "disabled": false,
@@ -8,9 +8,9 @@
         "env": []
     },
     {
-        "id": "3501fdbcd1f16838",
+        "id": "c0d558ec0d1cd740",
         "type": "ui_text_input",
-        "z": "e1a7e71d7b85c854",
+        "z": "c0905e8386e7a6dc",
         "name": "",
         "label": "Ultrasonic Sensor",
         "tooltip": "",
@@ -32,9 +32,9 @@
         ]
     },
     {
-        "id": "97a1125c6a64e58e",
+        "id": "ab33834d1fc51f96",
         "type": "mqtt in",
-        "z": "e1a7e71d7b85c854",
+        "z": "c0905e8386e7a6dc",
         "name": "",
         "topic": "esp32/distance",
         "qos": "2",
@@ -48,14 +48,14 @@
         "y": 200,
         "wires": [
             [
-                "3501fdbcd1f16838"
+                "c0d558ec0d1cd740"
             ]
         ]
     },
     {
-        "id": "e243124da4800284",
+        "id": "8ac3c70f178c1dd0",
         "type": "ui_button",
-        "z": "e1a7e71d7b85c854",
+        "z": "c0905e8386e7a6dc",
         "name": "",
         "group": "c23dc8d241ddbc9c",
         "order": 2,
@@ -76,14 +76,14 @@
         "y": 360,
         "wires": [
             [
-                "e8e66222676c644a"
+                "4d079cdc4e768830"
             ]
         ]
     },
     {
-        "id": "e8e66222676c644a",
+        "id": "4d079cdc4e768830",
         "type": "mqtt out",
-        "z": "e1a7e71d7b85c854",
+        "z": "c0905e8386e7a6dc",
         "name": "",
         "topic": "esp32/movement",
         "qos": "",
@@ -99,9 +99,9 @@
         "wires": []
     },
     {
-        "id": "0899de230be4ac62",
+        "id": "24faac8e58459aaf",
         "type": "ui_button",
-        "z": "e1a7e71d7b85c854",
+        "z": "c0905e8386e7a6dc",
         "name": "",
         "group": "c23dc8d241ddbc9c",
         "order": 2,
@@ -122,14 +122,14 @@
         "y": 440,
         "wires": [
             [
-                "d56d4b13d30f4595"
+                "584a1d40b99df71a"
             ]
         ]
     },
     {
-        "id": "d56d4b13d30f4595",
+        "id": "584a1d40b99df71a",
         "type": "mqtt out",
-        "z": "e1a7e71d7b85c854",
+        "z": "c0905e8386e7a6dc",
         "name": "",
         "topic": "esp32/movement",
         "qos": "",
@@ -145,9 +145,9 @@
         "wires": []
     },
     {
-        "id": "963a18c80bbdc04a",
+        "id": "afc0e505a27c4bd9",
         "type": "ui_button",
-        "z": "e1a7e71d7b85c854",
+        "z": "c0905e8386e7a6dc",
         "name": "",
         "group": "359f8da2f68e373d",
         "order": 2,
@@ -168,14 +168,14 @@
         "y": 540,
         "wires": [
             [
-                "aa3d890266f0f0be"
+                "58ede0ede3e7c27f"
             ]
         ]
     },
     {
-        "id": "aa3d890266f0f0be",
+        "id": "58ede0ede3e7c27f",
         "type": "mqtt out",
-        "z": "e1a7e71d7b85c854",
+        "z": "c0905e8386e7a6dc",
         "name": "",
         "topic": "esp32/claw",
         "qos": "",
@@ -191,9 +191,9 @@
         "wires": []
     },
     {
-        "id": "f20297368471e933",
+        "id": "8485fe3e46524e7a",
         "type": "ui_button",
-        "z": "e1a7e71d7b85c854",
+        "z": "c0905e8386e7a6dc",
         "name": "",
         "group": "359f8da2f68e373d",
         "order": 2,
@@ -214,14 +214,14 @@
         "y": 620,
         "wires": [
             [
-                "e6d461a446b9d4c1"
+                "8e302ba718580b5a"
             ]
         ]
     },
     {
-        "id": "e6d461a446b9d4c1",
+        "id": "8e302ba718580b5a",
         "type": "mqtt out",
-        "z": "e1a7e71d7b85c854",
+        "z": "c0905e8386e7a6dc",
         "name": "",
         "topic": "esp32/claw",
         "qos": "",
@@ -237,9 +237,9 @@
         "wires": []
     },
     {
-        "id": "4a371b835b59a266",
+        "id": "e9173e053f7ec193",
         "type": "ui_dropdown",
-        "z": "e1a7e71d7b85c854",
+        "z": "c0905e8386e7a6dc",
         "name": "",
         "label": "Selecciona un color",
         "tooltip": "",
@@ -252,8 +252,8 @@
         "multiple": false,
         "options": [
             {
-                "label": "Amarillo",
-                "value": "amarillo",
+                "label": "NONE",
+                "value": "none",
                 "type": "str"
             },
             {
@@ -267,8 +267,8 @@
                 "type": "str"
             },
             {
-                "label": "Café",
-                "value": "cafe",
+                "label": "Amarillo",
+                "value": "amarillo",
                 "type": "str"
             }
         ],
@@ -280,20 +280,20 @@
         "y": 280,
         "wires": [
             [
-                "a0c5e136fffef2a6"
+                "fd2a97aface8c806"
             ]
         ]
     },
     {
-        "id": "131c9140418fb854",
+        "id": "4d18da7402fd8d2c",
         "type": "ui_template",
-        "z": "e1a7e71d7b85c854",
+        "z": "c0905e8386e7a6dc",
         "group": "c23dc8d241ddbc9c",
         "name": "",
         "order": 4,
         "width": 0,
         "height": 0,
-        "format": "<div ng-bind-html=\"msg.payload\"></div>\n<style>\n    /* Cambiar color de fondo del dashboard */\n    body {\n        background-color: #f0f0f0;\n        /* Color gris claro */\n        font-family: Arial, sans-serif;\n    }\n\n    /* Estilizar los botones */\n    .md-button {\n        background-color: #007bff;\n        /* Azul */\n        color: white;\n        border-radius: 8px;\n        font-weight: bold;\n    }\n\n    .md-button:hover {\n        background-color: #0056b3;\n        /* Azul oscuro */\n    }\n\n    /* Personalizar el título de los grupos */\n    .nr-dashboard-cardtitle {\n        color: #ff5722;\n        /* Naranja */\n        font-size: 18px;\n        font-weight: bold;\n    }\n\n    /* Cambiar estilos del dropdown */\n    .nr-dashboard-dropdown {\n        background-color: #ffffff;\n        /* Fondo blanco */\n        border: 1px solid #ddd;\n        border-radius: 5px;\n        padding: 5px;\n    }\n\n    /* Estilizar el texto */\n    .nr-dashboard-text {\n        font-size: 16px;\n        color: #333333;\n        /* Texto gris oscuro */\n    }\n\n    @media (max-width: 600px) {\n  body {\n    background-color: #e0e0e0; /* Cambiar fondo en pantallas pequeñas */\n  }\n  .md-button {\n    font-size: 14px; /* Botones más pequeños */\n  }\n}\n\n</style>",
+        "format": "<div ng-bind-html=\"msg.payload\"></div>\n<div style=\"text-align: center;\">\n    <h2>Video Procesado</h2>\n    <img src=\"http://192.168.209.194:5000/video\" style=\"max-width: 100%; height: auto; border: 1px solid #ccc;\" />\n</div>\n<style>\n    /* Cambiar color de fondo del dashboard */\n    body {\n        background-color: #f0f0f0;\n        /* Color gris claro */\n        font-family: Arial, sans-serif;\n    }\n\n    /* Estilizar los botones */\n    .md-button {\n        background-color: #007bff;\n        /* Azul */\n        color: white;\n        border-radius: 8px;\n        font-weight: bold;\n    }\n\n    .md-button:hover {\n        background-color: #0056b3;\n        /* Azul oscuro */\n    }\n\n    /* Personalizar el título de los grupos */\n    .nr-dashboard-cardtitle {\n        color: #ff5722;\n        /* Naranja */\n        font-size: 18px;\n        font-weight: bold;\n    }\n\n    /* Cambiar estilos del dropdown */\n    .nr-dashboard-dropdown {\n        background-color: #ffffff;\n        /* Fondo blanco */\n        border: 1px solid #ddd;\n        border-radius: 5px;\n        padding: 5px;\n    }\n\n    /* Estilizar el texto */\n    .nr-dashboard-text {\n        font-size: 16px;\n        color: #333333;\n        /* Texto gris oscuro */\n    }\n\n    @media (max-width: 600px) {\n  body {\n    background-color: #e0e0e0; /* Cambiar fondo en pantallas pequeñas */\n  }\n  .md-button {\n    font-size: 14px; /* Botones más pequeños */\n  }\n}\n\n</style>",
         "storeOutMessages": true,
         "fwdInMessages": true,
         "resendOnRefresh": true,
@@ -306,9 +306,9 @@
         ]
     },
     {
-        "id": "a0c5e136fffef2a6",
+        "id": "fd2a97aface8c806",
         "type": "mqtt out",
-        "z": "e1a7e71d7b85c854",
+        "z": "c0905e8386e7a6dc",
         "name": "",
         "topic": "esp32/object",
         "qos": "",
@@ -326,11 +326,13 @@
     {
         "id": "c23dc8d241ddbc9c",
         "type": "ui_group",
-        "name": "Group 1",
+        "name": "Wall-e",
         "tab": "3b499c3a5dd489da",
         "order": 1,
         "disp": true,
-        "width": 6
+        "width": "6",
+        "collapse": false,
+        "className": ""
     },
     {
         "id": "947aa3e7ca25c668",
@@ -377,9 +379,11 @@
     {
         "id": "3b499c3a5dd489da",
         "type": "ui_tab",
-        "name": "Tab 1",
+        "name": "Home",
         "icon": "dashboard",
-        "order": 1
+        "order": 1,
+        "disabled": false,
+        "hidden": false
     },
     {
         "id": "4708eb48585d771d",
