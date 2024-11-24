@@ -162,7 +162,6 @@ void measureAndAct() {
       if (currentTime - lastMQTTPublishTime >= 1000) {
         lastMQTTPublishTime = currentTime;
         mqttClient.publish("esp32/distance", String(distance).c_str());
-        mqttClient.publish("esp32/object", "Object detected");
       }
     } else if (distance > 20.0) {
       Serial.println("Moving forward");
@@ -171,14 +170,12 @@ void measureAndAct() {
       if (currentTime - lastMQTTPublishTime >= 1000) {
         lastMQTTPublishTime = currentTime;
         mqttClient.publish("esp32/distance", String(distance).c_str());
-        mqttClient.publish("esp32/object", "No obstacles");
       }
     } else {
       Serial.println("Out of range");
       if (currentTime - lastMQTTPublishTime >= 1000) {
         lastMQTTPublishTime = currentTime;
         mqttClient.publish("esp32/distance", "Out of range");
-        mqttClient.publish("esp32/object", "Object not found");
       }
     }
   }
@@ -282,7 +279,6 @@ void callback(char* topic, byte* payload, unsigned int length) {
 
       // Publish messages indicating measurement and detection have stopped
       mqttClient.publish("esp32/distance", "Measurement has been stopped");
-      mqttClient.publish("esp32/object", "Detection of objects has been stopped");
     }
   } else if (String(topic) == "esp32/claw") {
     if (message == "Open") {
@@ -290,9 +286,15 @@ void callback(char* topic, byte* payload, unsigned int length) {
     } else if (message == "Close") {
       closeClaw();
     }
-  } else if (String(topic) == "esp32/found_object") {
+  } else if (String(topic) == "esp32/foundObject") {
     Serial.println("Tópico de acercamiento activado.");
     foundObject();  // Llama a la función para acercarse al objeto
+  }else if (String(topic) == "esp32/foundObjectCenter") {
+    int objectCenter = message.toInt(); // Convierte el mensaje a entero
+    // Usa `objectCenter` para ajustar la orientación
+  } else if (String(topic) == "esp32/foundObjectArea") {
+    int boundingBoxArea = message.toInt(); // Convierte el mensaje a entero
+    // Usa `boundingBoxArea` para controlar la distancia
   }
 }
 
@@ -303,7 +305,10 @@ void reconnect() {
       Serial.println("Connected");
       mqttClient.subscribe("esp32/movement");
       mqttClient.subscribe("esp32/claw");
-      mqttClient.subscribe("esp32/found_object"); 
+      mqttClient.subscribe("esp32/foundObject"); 
+      mqttClient.subscribe("esp32/foundObjectCenter");
+      mqttClient.subscribe("esp32/foundObjectArea");
+
     } else {
       Serial.print("Failed, rc=");
       Serial.print(mqttClient.state());
