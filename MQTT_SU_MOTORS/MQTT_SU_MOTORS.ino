@@ -221,19 +221,14 @@ void foundObject() {
   int objectCenter; // Valor inicial (actualizado por MQTT)
   int boundingBoxArea;        // Área inicial (actualizado por MQTT)
   const int approachThreshold = 500; // Umbral para detenerse
-
   bool approaching = true; // Controla el bucle de acercamiento
-
   int receivedObjectCenter = -1;  // Para almacenar temporalmente el valor del centro
   int receivedBoundingBoxArea = -1;  // Para almacenar temporalmente el área del bounding box
-  mqttClient.loop();
+  
   
   
   // Obtén el último valor publicado en 'esp32/foundObjectCenter'
   if (mqttClient.connected()) {
-    // Utilizamos una simulación de consulta al tópico
-    mqttClient.subscribe("esp32/foundObjectCenter");
-    mqttClient.subscribe("esp32/foundObjectArea");  
     mqttClient.loop();
     delay(100);  // Permitimos procesar el mensaje
     if (receivedObjectCenter != -1) {
@@ -316,6 +311,12 @@ void callback(char* topic, byte* payload, unsigned int length) {
     Serial.println("Tópico de acercamiento activado.");
     if (message == "Start") {
       foundObject();
+      else if (String(topic) == "esp32/foundObjectCenter") {
+      receivedObjectCenter = message.toInt();
+      } else if (String(topic) == "esp32/foundObjectArea") {
+      receivedBoundingBoxArea = message.toInt();
+    }
+
 
     }
   }
