@@ -309,15 +309,13 @@ void callback(char* topic, byte* payload, unsigned int length) {
     }
   } else if (String(topic) == "esp32/foundObject") {
     Serial.println("Tópico de acercamiento activado.");
-    if (message == "Start") {
-      foundObject();
-      else if (String(topic) == "esp32/foundObjectCenter") {
-      receivedObjectCenter = message.toInt();
-      } else if (String(topic) == "esp32/foundObjectArea") {
-      receivedBoundingBoxArea = message.toInt();
-    }
-
-
+      if (message == "Start") {
+        foundObject();
+        //else if (String(topic) == "esp32/foundObjectCenter") {
+        //receivedObjectCenter = message.toInt();
+        //} else if (String(topic) == "esp32/foundObjectArea") {
+        //receivedBoundingBoxArea = message.toInt();
+      //}
     }
   }
 }
