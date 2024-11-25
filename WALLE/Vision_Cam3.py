@@ -5,7 +5,7 @@ import time
 import paho.mqtt.client as mqtt # type: ignore
 
 # Configuración MQTT
-broker = "192.168.209.2"  # Dirección IP del broker MQTT (cambia según sea necesario)
+broker = "192.168.209.194"  # Dirección IP del broker MQTT (cambia según sea necesario)
 port = 1883
 movement_topic = "esp32/movement"
 claw_topic = "esp32/claw"

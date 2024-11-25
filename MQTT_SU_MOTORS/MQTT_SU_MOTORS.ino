@@ -37,7 +37,7 @@ const char* password = "ricki1903#$";
 // Casa
 //const char* mqttServer = "192.168.1.102";
 // TEC
-const char* mqttServer = "10.25.100.90";
+const char* mqttServer = "192.168.209.194";
 const int mqttPort = 1883;
 
 // Wi-Fi and MQTT clients
@@ -217,45 +217,71 @@ void stopClaw() {
 }
 ///////////////////////////////////////////////////////////////////////////////////
 void foundObject() {
-  int alignmentError = 0;
-  int frameCenter = 160;  // Suponiendo un ancho de imagen de 320 píxeles (ajustar si es necesario)
-  int objectCenter = 0;   // Este valor debe ser recibido como parámetro por MQTT
-  int boundingBoxArea = 0;  // Simulación de un área del objeto (debería ser recibido o calculado)
-  int approachThreshold = 500;  // Umbral para detenerse
+  const int frameCenter = 160; // Suponiendo un ancho de 320 píxeles (ajustar si es necesario)
+  int objectCenter; // Valor inicial (actualizado por MQTT)
+  int boundingBoxArea;        // Área inicial (actualizado por MQTT)
+  const int approachThreshold = 500; // Umbral para detenerse
 
-  // Suponiendo que estos valores se ajusten dinámicamente con mensajes MQTT
-  while (true) {
-    // Ejemplo: lógica simulada
-    alignmentError = frameCenter - objectCenter;  // Corregir orientación
+  bool approaching = true; // Controla el bucle de acercamiento
+
+  int receivedObjectCenter = -1;  // Para almacenar temporalmente el valor del centro
+  int receivedBoundingBoxArea = -1;  // Para almacenar temporalmente el área del bounding box
+  mqttClient.loop();
+  
+  
+  // Obtén el último valor publicado en 'esp32/foundObjectCenter'
+  if (mqttClient.connected()) {
+    // Utilizamos una simulación de consulta al tópico
+    mqttClient.subscribe("esp32/foundObjectCenter");
+    mqttClient.subscribe("esp32/foundObjectArea");  
+    mqttClient.loop();
+    delay(100);  // Permitimos procesar el mensaje
+    if (receivedObjectCenter != -1) {
+      objectCenter = receivedObjectCenter;
+    }
+    if (receivedBoundingBoxArea != -1) {
+      boundingBoxArea = receivedBoundingBoxArea;
+    }
+  }
+
+ // Mostrar los valores actualizados
+  Serial.print("Centro detectado: ");
+  Serial.println(objectCenter);
+  Serial.print("Área del bounding box: ");
+  Serial.println(boundingBoxArea);
+  Serial.println("Iniciando acercamiento al objeto.");
+
+  while (approaching) {
+    mqttClient.loop(); // Procesar mensajes MQTT
+
+    // Ajustar orientación según la posición del objeto
+    int alignmentError = frameCenter - objectCenter;
     if (alignmentError > 10) {
-      // Giro a la izquierda
       Serial.println("Corrigiendo orientación: girando a la izquierda");
-      ledcWrite(PWM_CHANNEL1, 20);  // Reducir velocidad
+      ledcWrite(PWM_CHANNEL1, turnSpeed);
       ledcWrite(PWM_CHANNEL2, 0);
     } else if (alignmentError < -10) {
-      // Giro a la derecha
       Serial.println("Corrigiendo orientación: girando a la derecha");
       ledcWrite(PWM_CHANNEL1, 0);
-      ledcWrite(PWM_CHANNEL2, 20);
+      ledcWrite(PWM_CHANNEL2, turnSpeed);
     } else {
-      // Movimiento recto
-      Serial.println("Avanzando hacia el objeto");
+      Serial.println("Orientación corregida. Avanzando hacia el objeto.");
       forward();
     }
 
-    // Simulación de área de un bounding box (debería actualizarse dinámicamente)
-    boundingBoxArea += 10;  // Aumentar progresivamente para simular acercamiento
-
-    // Si el área supera el umbral, detenerse
-    if (boundingBoxArea > approachThreshold) {
+    // Verificar si el objeto está lo suficientemente cerca
+    if (boundingBoxArea >= approachThreshold) {
       Serial.println("Objeto alcanzado. Deteniéndose.");
       stopMotors();
-      break;
+      mqttClient.publish("esp32/foundObject", "Stop");
+      approaching = false;
     }
 
-    delay(500);  // Pausa para simular tiempo de cálculo
+    delay(100); // Esperar un breve tiempo
   }
 }
+
+
 
 ///////////////////////////////////////////////////////////////////////////////////////
 void callback(char* topic, byte* payload, unsigned int length) {
@@ -290,6 +316,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
     Serial.println("Tópico de acercamiento activado.");
     if (message == "Start") {
       foundObject();
+
     }
   }
 }
