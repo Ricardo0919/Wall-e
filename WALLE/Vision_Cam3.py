@@ -5,7 +5,7 @@ import time
 import paho.mqtt.client as mqtt # type: ignore
 
 # Configuración MQTT
-broker = "192.168.209.194"  # Dirección IP del broker MQTT (cambia según sea necesario)
+broker = "10.25.100.90"  # Dirección IP del broker MQTT (cambia según sea necesario)
 port = 1883
 movement_topic = "esp32/movement"
 claw_topic = "esp32/claw"
@@ -76,6 +76,21 @@ def detectar_cubos(img, color_ranges):
                         cv2.drawContours(img, [approx], -1, (0, 255, 0), 2)
                         cv2.putText(img, f'Cubo {color}', (x, y - 10), 
                                     cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
+                        
+                        if len(contours) > 0:
+                            # Encontrar el contorno más grande
+                            c = max(contours, key=cv2.contourArea)
+                            x, y, w, h = cv2.boundingRect(c)
+                            center = x + w // 2
+                            area = w * h
+
+                            # Publicar los datos al ESP32
+                            mqtt_client.publish("esp32/foundObjectCenter", str(center))
+                            mqtt_client.publish("esp32/foundObjectArea", str(area))
+
+                            # Enviar comando para iniciar acercamiento
+                            mqtt_client.publish("esp32/foundObject", "Start")
+
                         ##########################################################################################
                         # Detener cualquier movimiento previo y notificar detección
                         mqtt_client.publish("esp32/movement", "Stop")
@@ -99,7 +114,7 @@ def detectar_cubos(img, color_ranges):
                             print(f"Enviando datos: centro={cx}, área={bounding_box_area}")
 
                             # Verificar si el área supera el umbral de detección
-                            if bounding_box_area > 500:  # Ajusta este valor al mismo umbral en el ESP32
+                            if bounding_box_area > 1000:  # Ajusta este valor al mismo umbral en el ESP32
                                 print("Cubo suficientemente cerca. Deteniendo acercamiento.")
                                 mqtt_client.publish("esp32/foundObject", "Stop")  # Detener el ESP32
                                 approach_complete = True
