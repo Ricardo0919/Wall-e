@@ -13,10 +13,6 @@ TOPIC_CLAW = "esp32/claw"
 CAMERA_URL = "http://192.168.137.2:4747/video"  # Cambia según la configuración de tu cámara
 WINDOW_NAME = "Detección de Cubos"
 
-<<<<<<< HEAD
-# URL del stream de la cámara ESP32 (ajusta la IP a la de tu ESP32)
-url = 'http://192.168.137.169/capture'  # Cambia la URL según sea necesario
-
 # Define los rangos de color en HSV para los cubos de color
 color_ranges = {
     'rojo': [
@@ -40,13 +36,6 @@ color_ranges = {
         ([20, 70, 100], [35, 220, 250]),        # Amarillo estándar
         ([25, 50, 80], [35, 200, 240])          # Amarillo cálido
     ]
-=======
-# Rangos de color en formato HSV para detección de cubos
-COLOR_RANGES = {
-    'rojo': ([0, 82, 182], [13, 162, 255]),
-    'azul': ([63, 51, 45], [134, 187, 255]),
-    'amarillo': ([15, 52, 151], [39, 255, 255])
->>>>>>> f5bd77a6aabea8cf9b80fdbd86490a32378ff282
 }
 
 # Inicializa el cliente MQTT
