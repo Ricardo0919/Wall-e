@@ -37,7 +37,7 @@ const char* password = "ricki1903#$";
 // Casa
 //const char* mqttServer = "192.168.1.102";
 // TEC
-const char* mqttServer = "10.25.100.90";
+const char* mqttServer = "172.22.80.1";
 const int mqttPort = 1883;
 
 // Wi-Fi and MQTT clients
@@ -223,46 +223,58 @@ void stopClaw() {
 }
 ///////////////////////////////////////////////////////////////////////////////////
 void foundObject() {
-  const int frameCenter = 400; // Assuming 320-pixel width
-  const int approachThreshold = 24100;
-  bool approaching = true;
-  //////////////
-  unsigned long startTime = millis();
+    const int frameCenter = 400; 
+    const int approachThreshold = 24100;
+    bool approaching = true;
+    unsigned long startTime = millis();
 
+    while (approaching) {
+        mqttClient.loop();
 
-  while (approaching) {
-    mqttClient.loop();
-    ///////
-    if (millis() - startTime > 10000) { // 10 segundos de límite
-        Serial.println("Tiempo límite alcanzado, deteniendo.");
-        stopMotors();
-        approaching = false;
+        // Limitar tiempo para evitar bloqueos
+        if (millis() - startTime > 10000) { 
+            Serial.println("Tiempo límite alcanzado, deteniendo.");
+            stopMotors();
+            approaching = false;
+            return;
+        }
+
+        int alignmentError = frameCenter - objectCenter;
+
+        if (alignmentError > 300) {
+            Serial.println("Corrigiendo orientación: girando a la izquierda");
+            digitalWrite(IN1, HIGH); // Motor izquierdo hacia adelante
+            digitalWrite(IN2, LOW);
+            digitalWrite(IN3, LOW); // Motor derecho detenido
+            digitalWrite(IN4, LOW);
+            ledcWrite(PWM_CHANNEL1, turnSpeed);
+            ledcWrite(PWM_CHANNEL2, 0);
+        } else if (alignmentError < -300) {
+            Serial.println("Corrigiendo orientación: girando a la derecha");
+            digitalWrite(IN1, LOW); // Motor izquierdo detenido
+            digitalWrite(IN2, LOW);
+            digitalWrite(IN3, HIGH); // Motor derecho hacia adelante
+            digitalWrite(IN4, LOW);
+            ledcWrite(PWM_CHANNEL1, 0);
+            ledcWrite(PWM_CHANNEL2, turnSpeed);
+        } else {
+            Serial.println("Orientación corregida. Avanzando hacia el objeto.");
+            digitalWrite(IN1, HIGH); // Ambos motores hacia adelante
+            digitalWrite(IN2, LOW);
+            digitalWrite(IN3, HIGH);
+            digitalWrite(IN4, LOW);
+            ledcWrite(PWM_CHANNEL1, straightSpeed);
+            ledcWrite(PWM_CHANNEL2, straightSpeed);
+        }
+
+        // Verificar si el objeto está cerca
+        if (boundingBoxArea >= approachThreshold) {
+            Serial.println("Objeto alcanzado. Deteniendo el robot.");
+            stopMotors();
+            mqttClient.publish("esp32/foundObject", "Stop");
+            approaching = false;
+        }
     }
-    ////////////
-
-    int alignmentError = frameCenter - objectCenter;
-
-    if (alignmentError > 300) {
-        Serial.println("Corrigiendo orientación: girando a la izquierda");
-        ledcWrite(PWM_CHANNEL1, turnSpeed);
-        ledcWrite(PWM_CHANNEL2, 0);
-    } else if (alignmentError < -300) {
-        Serial.println("Corrigiendo orientación: girando a la derecha");
-        ledcWrite(PWM_CHANNEL1, 0);
-        ledcWrite(PWM_CHANNEL2, turnSpeed);
-    } else {
-        Serial.println("Orientación corregida. Avanzando hacia el objeto.");
-        forward();
-    }
-
-    if (boundingBoxArea >= approachThreshold) {
-        Serial.println("Objeto alcanzado. Deteniendo el robot.");
-        stopMotors();
-        mqttClient.publish("esp32/foundObject", "Stop");
-        approaching = false;
-    } 
-}
-
 }
 
 
