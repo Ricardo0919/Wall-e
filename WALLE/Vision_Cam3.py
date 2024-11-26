@@ -13,11 +13,29 @@ TOPIC_CLAW = "esp32/claw"
 CAMERA_URL = "http://192.168.137.2:4747/video"  # Cambia según la configuración de tu cámara
 WINDOW_NAME = "Detección de Cubos"
 
-# Rangos de color en formato HSV para detección de cubos
-COLOR_RANGES = {
-    'rojo': ([0, 82, 182], [13, 162, 255]),
-    'azul': ([63, 51, 45], [134, 187, 255]),
-    'amarillo': ([15, 52, 151], [39, 255, 255])
+# Define los rangos de color en HSV para los cubos de color
+color_ranges = {
+    'rojo': [
+        ([0, 82, 182], [10, 162, 255]),         # Rojo brillante
+        ([139, 48, 76], [179, 171, 237]),       # Rojo intenso
+        ([170, 82, 182], [180, 162, 255]),      # Rojo oscuro
+        ([0, 70, 50], [10, 255, 200]),          # Rojo saturado
+        ([160, 60, 100], [180, 200, 255])       # Rojizo
+    ],
+    'azul': [
+        ([63, 51, 45], [90, 187, 255]),         # Azul estándar
+        ([35, 87, 112], [146, 221, 217]),       # Azul brillante
+        ([91, 51, 45], [134, 187, 255]),        # Azul intenso
+        ([100, 150, 50], [120, 255, 255]),      # Azul brillante saturado
+        ([85, 50, 70], [110, 220, 230])         # Azul cielo
+    ],
+    'amarillo': [
+        ([15, 52, 151], [30, 255, 255]),        # Amarillo brillante
+        ([14, 27, 48], [141, 100, 194]),        # Amarillo pálido
+        ([31, 52, 151], [39, 255, 255]),        # Amarillo intenso
+        ([20, 70, 100], [35, 220, 250]),        # Amarillo estándar
+        ([25, 50, 80], [35, 200, 240])          # Amarillo cálido
+    ]
 }
 
 # Inicializa el cliente MQTT
