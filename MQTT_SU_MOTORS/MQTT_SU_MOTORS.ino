@@ -15,8 +15,8 @@
 #define PWM_CHANNEL1 0
 #define PWM_CHANNEL2 1
 #define RESOLUTION 8
-int straightSpeed = 70;
-int turnSpeed = 50;
+int straightSpeed = 180;
+int turnSpeed = 100;
 
 // Buzzer
 #define buzzer 18
@@ -223,20 +223,30 @@ void stopClaw() {
 }
 ///////////////////////////////////////////////////////////////////////////////////
 void foundObject() {
-  const int frameCenter = 160; // Assuming 320-pixel width
-  const int approachThreshold = 500;
+  const int frameCenter = 400; // Assuming 320-pixel width
+  const int approachThreshold = 24100;
   bool approaching = true;
+  //////////////
+  unsigned long startTime = millis();
+
 
   while (approaching) {
     mqttClient.loop();
+    ///////
+    if (millis() - startTime > 10000) { // 10 segundos de límite
+        Serial.println("Tiempo límite alcanzado, deteniendo.");
+        stopMotors();
+        approaching = false;
+    }
+    ////////////
 
     int alignmentError = frameCenter - objectCenter;
 
-    if (alignmentError > 10) {
+    if (alignmentError > 300) {
         Serial.println("Corrigiendo orientación: girando a la izquierda");
         ledcWrite(PWM_CHANNEL1, turnSpeed);
         ledcWrite(PWM_CHANNEL2, 0);
-    } else if (alignmentError < -10) {
+    } else if (alignmentError < -300) {
         Serial.println("Corrigiendo orientación: girando a la derecha");
         ledcWrite(PWM_CHANNEL1, 0);
         ledcWrite(PWM_CHANNEL2, turnSpeed);
@@ -250,7 +260,7 @@ void foundObject() {
         stopMotors();
         mqttClient.publish("esp32/foundObject", "Stop");
         approaching = false;
-    }
+    } 
 }
 
 }

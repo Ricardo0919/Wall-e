@@ -15,7 +15,7 @@ mqtt_client = mqtt.Client()
 mqtt_client.connect(broker, port, 60)
 
 # URL del stream de la cámara ESP32 (ajusta la IP a la de tu ESP32)
-url = 'http://192.168.137.176/capture'  # Cambia la URL según sea necesario
+url = 'http://192.168.209.185/capture'  # Cambia la URL según sea necesario
 
 # Define los rangos de color en HSV para los cubos de color
 color_ranges = {
@@ -114,7 +114,7 @@ def detectar_cubos(img, color_ranges):
                             print(f"Enviando datos: centro={cx}, área={bounding_box_area}")
 
                             # Verificar si el área supera el umbral de detección
-                            if bounding_box_area > 1000:  # Ajusta este valor al mismo umbral en el ESP32
+                            if bounding_box_area > 24100:  # Ajusta este valor al mismo umbral en el ESP32
                                 print("Cubo suficientemente cerca. Deteniendo acercamiento.")
                                 mqtt_client.publish("esp32/foundObject", "Stop")  # Detener el ESP32
                                 approach_complete = True
