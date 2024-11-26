@@ -1,23 +1,24 @@
-import cv2  # Asegúrate de importar el módulo correctamente
+import cv2
 
-# Crear ventana y capturar video
-cv2.namedWindow("Camara")
-vc = cv2.VideoCapture(1)
+def main():
+    url = "http://192.168.137.2:4747/video"  # Asegúrate de que este es el endpoint correcto
+    cap = cv2.VideoCapture(url)
 
-if not vc.isOpened():
-    print("Error: No se pudo abrir la cámara.")
-    exit()
+    if not cap.isOpened():
+        print("No se pudo abrir el flujo de video.")
+        return
 
-while True:
-    next, frame = vc.read()
-    if not next:
-        print("Error: No se pudo capturar el frame.")
-        break
-    
-    cv2.imshow("Camara", frame)
-    if cv2.waitKey(50) >= 0:  # Salir al presionar cualquier tecla
-        break
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            print("No se pudo leer el fotograma.")
+            break
+        cv2.imshow('DroidCam', frame)
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
 
-# Liberar recursos
-vc.release()
-cv2.destroyAllWindows()
+    cap.release()
+    cv2.destroyAllWindows()
+
+
+main()
