@@ -49,6 +49,10 @@ WiFiClient wifiClient;
 PubSubClient mqttClient(wifiClient);
 
 bool isMeasuring = false;  // Controls if the robot is moving
+String objectCenterX;
+String objectCenterY;
+int objectCenterXInt;
+int objectCenterYInt;
 int objectCenter = -1;  
 int boundingBoxArea = -1;
 unsigned long lastMeasureTime = 0;
@@ -106,6 +110,9 @@ void loop() {
   if (isMeasuring) {
     measureAndAct();  // Execute measurement and actions only if active
   }
+
+  Serial.println(objectCenterX);
+  Serial.println(objectCenterY);
 }
 
 
@@ -217,7 +224,7 @@ void openClaw() {
   stopClaw();
   digitalWrite(CLAW_IN1, LOW);
   ledcWrite(CLAW_PWM_CHANNEL2, clawSpeed);
-  delay(2100);  // Changed from 700 to 2100
+  delay(1800);  // Changed from 700 to 2100
   stopClaw();
 
   // Robot remains stopped after opening the claw
@@ -229,7 +236,7 @@ void closeClaw() {
   stopClaw();
   digitalWrite(CLAW_IN2, LOW);
   ledcWrite(CLAW_PWM_CHANNEL1, clawSpeed);
-  delay(2100);  // Changed from 700 to 2100
+  delay(1800);  // Changed from 700 to 2100
   stopClaw();
 }
 
@@ -294,10 +301,8 @@ void foundObject() {
         }
     }
 }
-
-
-
 ///////////////////////////////////////////////////////////////////////////////////////
+
 void callback(char* topic, byte* payload, unsigned int length) {
   String message;
   for (unsigned int i = 0; i < length; i++) {
@@ -312,7 +317,8 @@ void callback(char* topic, byte* payload, unsigned int length) {
     if (message == "Start") {
       Serial.println("Movement started");
       isMeasuring = true;  // Activate measurement and movement
-    } else if (message == "Stop") {
+    } 
+    else if (message == "Stop") {
       Serial.println("Movement stopped");
       isMeasuring = false;  // Stop measurement and movement
       stopMotors();
@@ -320,24 +326,47 @@ void callback(char* topic, byte* payload, unsigned int length) {
       // Publish messages indicating measurement and detection have stopped
       mqttClient.publish("esp32/distance", "Measurement has been stopped");
     }
-  } else if (String(topic) == "esp32/claw") {
+  } 
+
+  else if (String(topic) == "esp32/claw") {
     if (message == "Open") {
       openClaw();
-    } else if (message == "Close") {
+    } 
+    else if (message == "Close") {
       closeClaw();
     }
-    }
-    else if (String(topic) == "esp32/foundObject") {
-    Serial.println("Tópico de acercamiento activado.");
-    if (message == "Start") {
-      foundObject();
-    } else if (String(topic) == "esp32/foundObjectCenter") {
-      objectCenter = message.toInt();
-    } else if (String(topic) == "esp32/foundObjectArea") {
-      boundingBoxArea = message.toInt();
-   }
-}
+  }
 
+  else if (String(topic) == "esp32/foundObject") {
+    if (message == "Start"){
+      //foundObject();
+    }
+  }
+
+  else if (String(topic) == "esp32/objectCenterX") {
+    objectCenterX = message;  // Asigna el valor recibido como String
+    int objectCenterXInt = objectCenterX.toInt();  // Convierte a int
+    Serial.print("Recibido en esp32/objectCenterX: ");
+    Serial.print(objectCenterX);
+    Serial.print(" (int: ");
+    Serial.print(objectCenterXInt);
+    Serial.println(")");
+  }
+
+  else if (String(topic) == "esp32/objectCenterY") {
+    objectCenterY = message;  // Asigna el valor recibido como String
+    int objectCenterYInt = objectCenterY.toInt();  // Convierte a int
+    Serial.print("Recibido en esp32/objectCenterY: ");
+    Serial.print(objectCenterY);
+    Serial.print(" (int: ");
+    Serial.print(objectCenterYInt);
+    Serial.println(")");
+  }
+ 
+
+  else if (String(topic) == "esp32/foundObjectArea") {
+    boundingBoxArea = message.toInt();
+  }
 
 }
 
