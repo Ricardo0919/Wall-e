@@ -1,7 +1,11 @@
 import cv2
 import numpy as np
 import paho.mqtt.client as mqtt
-import time
+import flask_server
+
+flask_server.iniciar_servidor()
+print("Servidor Flask iniciado en http://localhost:5000/video")
+
 
 # Configuración MQTT
 broker = "192.168.137.56"  # Dirección IP del broker MQTT
