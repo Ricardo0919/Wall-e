@@ -4,7 +4,7 @@ import paho.mqtt.client as mqtt
 import flask_server
 
 flask_server.iniciar_servidor()
-print("Servidor Flask iniciado en http://ipLocalDelProgramaDondeCorresFlask:5000/video")
+print("Servidor Flask iniciado en http://xD:5000/video")
 
 
 # Configuración MQTT
