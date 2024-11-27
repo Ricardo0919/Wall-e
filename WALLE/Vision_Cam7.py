@@ -59,7 +59,7 @@ color_ranges = {
 }
 
 # Fuente de video
-url = "http:/10.25.82.187:4747/video"  # Ajusta la URL según tu configuración
+url = "http://10.25.82.187:4747/video"  # Ajusta la URL según tu configuración
 cap = cv2.VideoCapture(url)
 
 if not cap.isOpened():
@@ -104,17 +104,25 @@ def detectar_cubos(frame, color_objetivo):
             x, y, w, h = cv2.boundingRect(approx)
             aspect_ratio = float(w) / h
             if 0.8 < aspect_ratio < 1.2:  # Aproximadamente cuadrado
-                cv2.drawContours(frame, [approx], -1, (0, 255, 0), 2)
-                cv2.putText(frame, f"Cubo {color_objetivo}", (x, y - 10),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
-                print(f"Cubo {color_objetivo} detectado en posición ({x}, {y}).")
-                mqtt_client.publish(position_x_topic, x)
-                mqtt_client.publish(position_y_topic, y)
+                
+                contour_area = cv2.contourArea(contour)
+                bounding_box_area = w * h
+                extent = contour_area / bounding_box_area
 
-                if not cube_found:
-                    mqtt_client.publish(movement_topic, "Stop")
-                    mqtt_client.publish(found_object_topic, "Start")
-                    cube_found = True
+                if 0.7 < extent < 1.0:
+
+                    cv2.drawContours(frame, [approx], -1, (0, 255, 0), 2)
+                    cv2.putText(frame, f"Cubo {color_objetivo}", (x, y - 10),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
+                    print(f"Cubo {color_objetivo} detectado en posición ({x}, {y}).")
+
+                    mqtt_client.publish(position_x_topic, str(x))
+                    mqtt_client.publish(position_y_topic, str(y))
+
+                    if not cube_found:
+                        mqtt_client.publish(movement_topic, "Stop")
+                        mqtt_client.publish(found_object_topic, "Start")
+                        cube_found = True
 
     return frame
 

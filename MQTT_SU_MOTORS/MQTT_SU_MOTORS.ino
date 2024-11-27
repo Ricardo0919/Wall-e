@@ -110,9 +110,6 @@ void loop() {
   if (isMeasuring) {
     measureAndAct();  // Execute measurement and actions only if active
   }
-
-  Serial.println(objectCenterX);
-  Serial.println(objectCenterY);
 }
 
 
@@ -248,58 +245,52 @@ void stopClaw() {
 }
 ///////////////////////////////////////////////////////////////////////////////////
 void foundObject() {
-    const int frameCenter = 400; 
-    const int approachThreshold = 24100;
-    bool approaching = true;
-    unsigned long startTime = millis();
+  const int frameCenter = 320; 
+  const int approachThreshold = 24100;
+  bool approaching = true;
+  unsigned long startTime = millis();
+  int alignmentError;
 
-    while (approaching) {
-        mqttClient.loop();
+  while (approaching) {
+    alignmentError = frameCenter - objectCenterXInt;
 
-        // Limitar tiempo para evitar bloqueos
-        if (millis() - startTime > 10000) { 
-            Serial.println("Tiempo límite alcanzado, deteniendo.");
-            stopMotors();
-            approaching = false;
-            return;
-        }
-
-        int alignmentError = frameCenter - objectCenter;
-
-        if (alignmentError > 300) {
-            Serial.println("Corrigiendo orientación: girando a la izquierda");
-            digitalWrite(IN1, HIGH); // Motor izquierdo hacia adelante
-            digitalWrite(IN2, LOW);
-            digitalWrite(IN3, LOW); // Motor derecho detenido
-            digitalWrite(IN4, LOW);
-            ledcWrite(PWM_CHANNEL1, turnSpeed);
-            ledcWrite(PWM_CHANNEL2, 0);
-        } else if (alignmentError < -300) {
-            Serial.println("Corrigiendo orientación: girando a la derecha");
-            digitalWrite(IN1, LOW); // Motor izquierdo detenido
-            digitalWrite(IN2, LOW);
-            digitalWrite(IN3, HIGH); // Motor derecho hacia adelante
-            digitalWrite(IN4, LOW);
-            ledcWrite(PWM_CHANNEL1, 0);
-            ledcWrite(PWM_CHANNEL2, turnSpeed);
-        } else {
-            Serial.println("Orientación corregida. Avanzando hacia el objeto.");
-            digitalWrite(IN1, HIGH); // Ambos motores hacia adelante
-            digitalWrite(IN2, LOW);
-            digitalWrite(IN3, HIGH);
-            digitalWrite(IN4, LOW);
-            ledcWrite(PWM_CHANNEL1, straightSpeed);
-            ledcWrite(PWM_CHANNEL2, straightSpeed);
-        }
-
-        // Verificar si el objeto está cerca
-        if (boundingBoxArea >= approachThreshold) {
-            Serial.println("Objeto alcanzado. Deteniendo el robot.");
-            stopMotors();
-            mqttClient.publish("esp32/foundObject", "Stop");
-            approaching = false;
-        }
+    if (alignmentError > 20) {
+      //Turn Left
+      Serial.println("Turning Left");
+      ledcWrite(PWM_CHANNEL1, turnSpeedR);
+      digitalWrite(IN2, LOW);
+      digitalWrite(IN3, HIGH);
+      ledcWrite(PWM_CHANNEL2, turnSpeedL);
+    } 
+    else if (alignmentError < -20) {
+      //Turn Right
+      Serial.println("Turning Right");
+      ledcWrite(PWM_CHANNEL1, turnSpeedR);
+      digitalWrite(IN2, HIGH);
+      digitalWrite(IN3, LOW);
+      ledcWrite(PWM_CHANNEL2, turnSpeedL);
+    } 
+    else {
+      Serial.println("Center");
+      stopMotors();
+      // Serial.println("Orientación corregida. Avanzando hacia el objeto.");
+      // digitalWrite(IN1, HIGH); // Ambos motores hacia adelante
+      // digitalWrite(IN2, LOW);
+      // digitalWrite(IN3, HIGH);
+      // digitalWrite(IN4, LOW);
+      // ledcWrite(PWM_CHANNEL1, straightSpeed);
+      // ledcWrite(PWM_CHANNEL2, straightSpeed);
     }
+
+    // // Verificar si el objeto está cerca
+    // if (boundingBoxArea >= approachThreshold) {
+    //   Serial.println("Objeto alcanzado. Deteniendo el robot.");
+    //   stopMotors();
+    //   mqttClient.publish("esp32/foundObject", "Stop");
+    //   approaching = false;
+    // }
+  }
+
 }
 ///////////////////////////////////////////////////////////////////////////////////////
 
@@ -339,28 +330,25 @@ void callback(char* topic, byte* payload, unsigned int length) {
 
   else if (String(topic) == "esp32/foundObject") {
     if (message == "Start"){
-      //foundObject();
+      foundObject();
+    }
+    else if (message == "Stop"){
+      stopMotors();
     }
   }
 
   else if (String(topic) == "esp32/objectCenterX") {
     objectCenterX = message;  // Asigna el valor recibido como String
     int objectCenterXInt = objectCenterX.toInt();  // Convierte a int
-    Serial.print("Recibido en esp32/objectCenterX: ");
-    Serial.print(objectCenterX);
-    Serial.print(" (int: ");
-    Serial.print(objectCenterXInt);
-    Serial.println(")");
+    // Serial.print("Recibido en esp32/objectCenterX: ");
+    // Serial.print(objectCenterXInt);
   }
 
   else if (String(topic) == "esp32/objectCenterY") {
     objectCenterY = message;  // Asigna el valor recibido como String
     int objectCenterYInt = objectCenterY.toInt();  // Convierte a int
-    Serial.print("Recibido en esp32/objectCenterY: ");
-    Serial.print(objectCenterY);
-    Serial.print(" (int: ");
-    Serial.print(objectCenterYInt);
-    Serial.println(")");
+    // Serial.print("Recibido en esp32/objectCenterY: ");
+    // Serial.print(objectCenterYInt);
   }
  
 
@@ -378,7 +366,8 @@ void reconnect() {
       mqttClient.subscribe("esp32/movement");
       mqttClient.subscribe("esp32/claw");
       mqttClient.subscribe("esp32/foundObject"); 
-      mqttClient.subscribe("esp32/foundObjectCenter");
+      mqttClient.subscribe("esp32/objectCenterX");
+      mqttClient.subscribe("esp32/objectCenterY");
       mqttClient.subscribe("esp32/foundObjectArea");
 
     } else {
