@@ -15,8 +15,12 @@
 #define PWM_CHANNEL1 0
 #define PWM_CHANNEL2 1
 #define RESOLUTION 8
-int straightSpeed = 180;
-int turnSpeed = 100;
+int straightSpeed  = 160;
+int straightSpeedR = 170;
+int straightSpeedL = 125;
+int turnSpeed = 160;
+int turnSpeedR = 170;
+int turnSpeedL = 125;
 
 // Buzzer
 #define buzzer 18
@@ -37,7 +41,7 @@ const char* password = "ricki1903#$";
 // Casa
 //const char* mqttServer = "192.168.1.102";
 // TEC
-const char* mqttServer = "172.22.80.1";
+const char* mqttServer = "192.168.209.2";
 const int mqttPort = 1883;
 
 // Wi-Fi and MQTT clients
@@ -107,10 +111,10 @@ void loop() {
 
 
 void forward() {
-  ledcWrite(PWM_CHANNEL1, straightSpeed);
+  ledcWrite(PWM_CHANNEL1, straightSpeedR);
   digitalWrite(IN2, LOW);
   digitalWrite(IN3, LOW);
-  ledcWrite(PWM_CHANNEL2, straightSpeed);
+  ledcWrite(PWM_CHANNEL2, straightSpeedL);
 }
 
 void stopMotors() {
@@ -122,14 +126,28 @@ void stopMotors() {
   ledcWrite(PWM_CHANNEL2, 0);
 }
 
-void turn() {
-  ledcWrite(PWM_CHANNEL1, turnSpeed);
-  digitalWrite(IN2, LOW);
-  digitalWrite(IN3, HIGH);
-  ledcWrite(PWM_CHANNEL2, turnSpeed);
+void turnRight() {
+  ledcWrite(PWM_CHANNEL1, turnSpeedR);
+  digitalWrite(IN2, HIGH);
+  digitalWrite(IN3, LOW);
+  ledcWrite(PWM_CHANNEL2, turnSpeedL);
 
   unsigned long startTurn = millis();
-  while (millis() - startTurn < 1000) {
+  while (millis() - startTurn < 1900) {
+    mqttClient.loop();  // Process MQTT messages while turning
+  }
+
+  stopMotors();
+}
+
+void turnLeft() {
+  ledcWrite(PWM_CHANNEL1, turnSpeedR);
+  digitalWrite(IN2, LOW);
+  digitalWrite(IN3, HIGH);
+  ledcWrite(PWM_CHANNEL2, turnSpeedL);
+
+  unsigned long startTurn = millis();
+  while (millis() - startTurn < 1900) {
     mqttClient.loop();  // Process MQTT messages while turning
   }
 
@@ -156,20 +174,20 @@ void measureAndAct() {
     lastMeasureTime = currentTime;
     float distance = measureDistance();
 
-    if (distance > 0 && distance <= 20.0) {
+    if (distance > 0 && distance <= 35.0) {
       Serial.println("Obstacle detected. Turning...");
       digitalWrite(buzzer, HIGH);
       delay(500);
       digitalWrite(buzzer, LOW);
 
-      turn();
+      turnRight();
       forward();
 
       if (currentTime - lastMQTTPublishTime >= 1000) {
         lastMQTTPublishTime = currentTime;
         mqttClient.publish("esp32/distance", String(distance).c_str());
       }
-    } else if (distance > 20.0) {
+    } else if (distance > 35.0) {
       Serial.println("Moving forward");
       forward();
 
