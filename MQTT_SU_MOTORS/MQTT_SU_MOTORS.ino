@@ -16,7 +16,7 @@
 #define PWM_CHANNEL2 1
 #define RESOLUTION 8
 int straightSpeed  = 160;
-int straightSpeedR = 170;
+int straightSpeedR = 175;
 int straightSpeedL = 125;
 int turnSpeed = 160;
 int turnSpeedR = 170;
@@ -50,11 +50,8 @@ PubSubClient mqttClient(wifiClient);
 
 bool isMeasuring = false;  // Controls if the robot is moving
 String objectCenterX;
-String objectCenterY;
 int objectCenterXInt;
-int objectCenterYInt;
-int objectCenter = -1;  
-int boundingBoxArea = -1;
+float distanceObject;
 unsigned long lastMeasureTime = 0;
 unsigned long lastMQTTPublishTime = 0;
 void reconnect();
@@ -137,7 +134,7 @@ void turnRight() {
   ledcWrite(PWM_CHANNEL2, turnSpeedL);
 
   unsigned long startTurn = millis();
-  while (millis() - startTurn < 1900) {
+  while (millis() - startTurn < 2000) {
     mqttClient.loop();  // Process MQTT messages while turning
   }
 
@@ -151,7 +148,7 @@ void turnLeft() {
   ledcWrite(PWM_CHANNEL2, turnSpeedL);
 
   unsigned long startTurn = millis();
-  while (millis() - startTurn < 1900) {
+  while (millis() - startTurn < 2000) {
     mqttClient.loop();  // Process MQTT messages while turning
   }
 
@@ -221,7 +218,7 @@ void openClaw() {
   stopClaw();
   digitalWrite(CLAW_IN1, LOW);
   ledcWrite(CLAW_PWM_CHANNEL2, clawSpeed);
-  delay(1800);  // Changed from 700 to 2100
+  delay(1500);  // Changed from 700 to 2100
   stopClaw();
 
   // Robot remains stopped after opening the claw
@@ -233,7 +230,15 @@ void closeClaw() {
   stopClaw();
   digitalWrite(CLAW_IN2, LOW);
   ledcWrite(CLAW_PWM_CHANNEL1, clawSpeed);
-  delay(1800);  // Changed from 700 to 2100
+  delay(1500);  // Changed from 700 to 2100
+  stopClaw();
+}
+
+void closeClawObject() {
+  stopClaw();
+  digitalWrite(CLAW_IN2, LOW);
+  ledcWrite(CLAW_PWM_CHANNEL1, clawSpeed);
+  delay(1150);  // Changed from 700 to 2100
   stopClaw();
 }
 
@@ -243,53 +248,56 @@ void stopClaw() {
   digitalWrite(CLAW_IN1, LOW);
   digitalWrite(CLAW_IN2, LOW);
 }
+
 ///////////////////////////////////////////////////////////////////////////////////
 void foundObject() {
-  const int frameCenter = 320; 
-  const int approachThreshold = 24100;
+  // const int frameCenter = 280; 
   bool approaching = true;
-  unsigned long startTime = millis();
-  int alignmentError;
+  // int alignmentError;  
+
+  openClaw();
 
   while (approaching) {
-    alignmentError = frameCenter - objectCenterXInt;
+    mqttClient.loop();
 
-    if (alignmentError > 20) {
+    //alignmentError = frameCenter - objectCenterXInt;
+
+    if (objectCenterXInt < -10) {
       //Turn Left
-      Serial.println("Turning Left");
-      ledcWrite(PWM_CHANNEL1, turnSpeedR);
+      ledcWrite(PWM_CHANNEL1, 100);
       digitalWrite(IN2, LOW);
       digitalWrite(IN3, HIGH);
-      ledcWrite(PWM_CHANNEL2, turnSpeedL);
+      ledcWrite(PWM_CHANNEL2, 55);
     } 
-    else if (alignmentError < -20) {
+    else if (objectCenterXInt > 10) {
       //Turn Right
-      Serial.println("Turning Right");
-      ledcWrite(PWM_CHANNEL1, turnSpeedR);
+      ledcWrite(PWM_CHANNEL1, 100);
       digitalWrite(IN2, HIGH);
       digitalWrite(IN3, LOW);
-      ledcWrite(PWM_CHANNEL2, turnSpeedL);
+      ledcWrite(PWM_CHANNEL2, 55);
     } 
     else {
-      Serial.println("Center");
+      //Center
+      forward();
+      distanceObject = measureDistance();
+      if (distanceObject > 0 && distanceObject <= 20.0) {
+        stopMotors();
+        approaching = false;
+      }      
+    }
+  }
+  
+  while (true){
+    forward();
+    distanceObject = measureDistance();
+    if (distanceObject > 0 && distanceObject <= 5.0) {
       stopMotors();
-      // Serial.println("Orientación corregida. Avanzando hacia el objeto.");
-      // digitalWrite(IN1, HIGH); // Ambos motores hacia adelante
-      // digitalWrite(IN2, LOW);
-      // digitalWrite(IN3, HIGH);
-      // digitalWrite(IN4, LOW);
-      // ledcWrite(PWM_CHANNEL1, straightSpeed);
-      // ledcWrite(PWM_CHANNEL2, straightSpeed);
+      break;
     }
 
-    // // Verificar si el objeto está cerca
-    // if (boundingBoxArea >= approachThreshold) {
-    //   Serial.println("Objeto alcanzado. Deteniendo el robot.");
-    //   stopMotors();
-    //   mqttClient.publish("esp32/foundObject", "Stop");
-    //   approaching = false;
-    // }
   }
+
+  closeClawObject();
 
 }
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -339,21 +347,9 @@ void callback(char* topic, byte* payload, unsigned int length) {
 
   else if (String(topic) == "esp32/objectCenterX") {
     objectCenterX = message;  // Asigna el valor recibido como String
-    int objectCenterXInt = objectCenterX.toInt();  // Convierte a int
+    objectCenterXInt = objectCenterX.toInt();  // Convierte a int
     // Serial.print("Recibido en esp32/objectCenterX: ");
     // Serial.print(objectCenterXInt);
-  }
-
-  else if (String(topic) == "esp32/objectCenterY") {
-    objectCenterY = message;  // Asigna el valor recibido como String
-    int objectCenterYInt = objectCenterY.toInt();  // Convierte a int
-    // Serial.print("Recibido en esp32/objectCenterY: ");
-    // Serial.print(objectCenterYInt);
-  }
- 
-
-  else if (String(topic) == "esp32/foundObjectArea") {
-    boundingBoxArea = message.toInt();
   }
 
 }
@@ -367,8 +363,6 @@ void reconnect() {
       mqttClient.subscribe("esp32/claw");
       mqttClient.subscribe("esp32/foundObject"); 
       mqttClient.subscribe("esp32/objectCenterX");
-      mqttClient.subscribe("esp32/objectCenterY");
-      mqttClient.subscribe("esp32/foundObjectArea");
 
     } else {
       Serial.print("Failed, rc=");

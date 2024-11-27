@@ -103,21 +103,36 @@ def detectar_cubos(frame, color_objetivo):
         if len(approx) == 4:  # Aproximadamente un cuadrado
             x, y, w, h = cv2.boundingRect(approx)
             aspect_ratio = float(w) / h
-            if 0.8 < aspect_ratio < 1.2:  # Aproximadamente cuadrado
+            if 0.2 < aspect_ratio < 1.8:  # Aproximadamente cuadrado
                 
                 contour_area = cv2.contourArea(contour)
                 bounding_box_area = w * h
                 extent = contour_area / bounding_box_area
 
-                if 0.7 < extent < 1.0:
+                if 0.6 < extent < 1.1:
 
                     cv2.drawContours(frame, [approx], -1, (0, 255, 0), 2)
                     cv2.putText(frame, f"Cubo {color_objetivo}", (x, y - 10),
                                 cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
                     print(f"Cubo {color_objetivo} detectado en posición ({x}, {y}).")
 
-                    mqtt_client.publish(position_x_topic, str(x))
-                    mqtt_client.publish(position_y_topic, str(y))
+                    # Calcula el centro del cubo
+                    center_x = x + w // 2
+                    center_y = y + h // 2
+
+                    # Calcula el centro del frame
+                    frame_center_x = frame.shape[1] // 2
+                    frame_center_y = frame.shape[0] // 2
+
+                    # Calcula la distancia entre el centro del cubo y el centro del frame
+                    distance_x = center_x - frame_center_x
+                    distance_y = center_y - frame_center_y
+
+                    # Imprime la información en consola
+                    print(f"Cubo {color_objetivo} detectado en posición centro ({center_x}, {center_y}).")
+                    print(f"Distancia al centro del frame: X = {distance_x}, Y = {distance_y}")
+
+                    mqtt_client.publish(position_x_topic, str(distance_x))
 
                     if not cube_found:
                         mqtt_client.publish(movement_topic, "Stop")
