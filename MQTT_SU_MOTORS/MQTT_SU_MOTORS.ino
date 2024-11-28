@@ -257,34 +257,47 @@ void foundObject() {
 
   openClaw();
 
+  int32_t proportion = 128; // Coeficiente proporcional (ajustable)
+  int prev_error = 0;       // Almacena el error anterior
+
   while (approaching) {
     mqttClient.loop();
 
-    //alignmentError = frameCenter - objectCenterXInt;
+    // Calcula el error actual
+    int error = objectCenterXInt; // El valor ya está en el rango adecuado
 
-    if (objectCenterXInt < -10) {
-      //Turn Left
-      ledcWrite(PWM_CHANNEL1, 100);
+    // Calcula la corrección proporcional
+    int32_t speedDiff = (error * (int32_t)proportion) / 256;
+
+    // Aplica la corrección a los motores
+    if (error < -10) {
+      // Turn Left
+      ledcWrite(PWM_CHANNEL1, 50 + abs(speedDiff)); // Reduce velocidad en un lado
       digitalWrite(IN2, LOW);
       digitalWrite(IN3, HIGH);
-      ledcWrite(PWM_CHANNEL2, 55);
+      ledcWrite(PWM_CHANNEL2, 50 + abs(speedDiff)); // Aumenta velocidad en el otro lado
     } 
-    else if (objectCenterXInt > 10) {
-      //Turn Right
-      ledcWrite(PWM_CHANNEL1, 100);
+    else if (error > 10) {
+      // Turn Right
+      ledcWrite(PWM_CHANNEL1, 50 + abs(speedDiff));
       digitalWrite(IN2, HIGH);
       digitalWrite(IN3, LOW);
-      ledcWrite(PWM_CHANNEL2, 55);
+      ledcWrite(PWM_CHANNEL2, 50 + abs(speedDiff));
     } 
     else {
-      //Center
+      // Center (sin corrección adicional)
       forward();
       distanceObject = measureDistance();
       if (distanceObject > 0 && distanceObject <= 20.0) {
         stopMotors();
         approaching = false;
-      }      
+      }
     }
+
+    // Actualiza el error anterior
+    prev_error = error;
+  }
+
   }
   
   while (true){
