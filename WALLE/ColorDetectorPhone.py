@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 
 # URL del stream de la cámara DroidCam
-url = "http://192.168.137.2:4747/video"  # Cambia esta URL según sea necesario
+url = "http://10.25.82.187:4747/video"  # Cambia esta URL según sea necesario
 
 def nothing(x):
     pass

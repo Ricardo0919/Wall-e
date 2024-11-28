@@ -14,7 +14,6 @@ object_topic = "esp32/object"  # Tópico para recibir el color del cubo a buscar
 movement_topic = "esp32/movement"  # Tópico para enviar la señal de "Stop"
 found_object_topic = "esp32/foundObject"  # Tópico para enviar la señal de "Start"
 position_x_topic = "esp32/objectCenterX"  # Tópico para enviar centro de x
-position_y_topic = "esp32/objectCenterY"  # Tópico para enviar centro de y
 
 # Inicializa el cliente MQTT
 mqtt_client = mqtt.Client()
@@ -49,12 +48,7 @@ color_ranges = {
         ([104, 34, 0], [115, 255, 221])         # Azul
     ],
     'amarillo': [
-        ([9, 168, 85], [42, 255, 186]),         # Amarillo
-        ([15, 52, 151], [30, 255, 255]),        # Amarillo brillante
-        ([14, 27, 48], [141, 100, 194]),        # Amarillo pálido
-        ([31, 52, 151], [39, 255, 255]),        # Amarillo intenso
-        ([20, 70, 100], [35, 220, 250]),        # Amarillo estándar
-        ([25, 50, 80], [35, 200, 240])          # Amarillo cálido
+        ([16, 140, 148], [29, 255, 255])        # Amarillo
     ]
 }
 

@@ -134,7 +134,7 @@ void turnRight() {
   ledcWrite(PWM_CHANNEL2, turnSpeedL);
 
   unsigned long startTurn = millis();
-  while (millis() - startTurn < 2000) {
+  while (millis() - startTurn < 2100) {
     mqttClient.loop();  // Process MQTT messages while turning
   }
 
@@ -148,7 +148,7 @@ void turnLeft() {
   ledcWrite(PWM_CHANNEL2, turnSpeedL);
 
   unsigned long startTurn = millis();
-  while (millis() - startTurn < 2000) {
+  while (millis() - startTurn < 2100) {
     mqttClient.loop();  // Process MQTT messages while turning
   }
 
@@ -238,7 +238,7 @@ void closeClawObject() {
   stopClaw();
   digitalWrite(CLAW_IN2, LOW);
   ledcWrite(CLAW_PWM_CHANNEL1, clawSpeed);
-  delay(1150);  // Changed from 700 to 2100
+  delay(1200);  // Changed from 700 to 2100
   stopClaw();
 }
 
@@ -252,54 +252,56 @@ void stopClaw() {
 ///////////////////////////////////////////////////////////////////////////////////
 void foundObject() {
   // const int frameCenter = 280; 
-  bool approaching = true;
-  // int alignmentError;  
-
-  openClaw();
-
+  // int alignmentError;
+  int32_t speedDiff;  
+  int error;
   int32_t proportion = 128; // Coeficiente proporcional (ajustable)
   int prev_error = 0;       // Almacena el error anterior
 
-  while (approaching) {
+  openClaw();
+  
+  while (true){
+    forward();
+    distanceObject = measureDistance();
+    if (distanceObject > 0 && distanceObject <= 50.0) {
+      stopMotors();
+      break;
+    }
+  }
+
+  while (true) {
     mqttClient.loop();
 
     // Calcula el error actual
-    int error = objectCenterXInt; // El valor ya está en el rango adecuado
-
+    //error = objectCenterXInt; // El valor ya está en el rango adecuado
     // Calcula la corrección proporcional
-    int32_t speedDiff = (error * (int32_t)proportion) / 256;
+    //speedDiff = (error * (int32_t)proportion) / 256;
 
     // Aplica la corrección a los motores
-    if (error < -10) {
+    if (objectCenterXInt < -10) {
       // Turn Left
-      ledcWrite(PWM_CHANNEL1, 50 + abs(speedDiff)); // Reduce velocidad en un lado
+      ledcWrite(PWM_CHANNEL1, 70); 
       digitalWrite(IN2, LOW);
       digitalWrite(IN3, HIGH);
-      ledcWrite(PWM_CHANNEL2, 50 + abs(speedDiff)); // Aumenta velocidad en el otro lado
+      ledcWrite(PWM_CHANNEL2, 70);
     } 
-    else if (error > 10) {
+    else if (objectCenterXInt > 10) {
       // Turn Right
-      ledcWrite(PWM_CHANNEL1, 50 + abs(speedDiff));
+      ledcWrite(PWM_CHANNEL1, 70);
       digitalWrite(IN2, HIGH);
       digitalWrite(IN3, LOW);
-      ledcWrite(PWM_CHANNEL2, 50 + abs(speedDiff));
+      ledcWrite(PWM_CHANNEL2, 70);
     } 
     else {
       // Center (sin corrección adicional)
-      forward();
-      distanceObject = measureDistance();
-      if (distanceObject > 0 && distanceObject <= 20.0) {
-        stopMotors();
-        approaching = false;
-      }
-    }
-
-    // Actualiza el error anterior
-    prev_error = error;
-  }
-
-  }
+      stopMotors();
+      break;
   
+    }
+    // Actualiza el error anterior
+    //prev_error = error;
+  }
+
   while (true){
     forward();
     distanceObject = measureDistance();
@@ -307,7 +309,6 @@ void foundObject() {
       stopMotors();
       break;
     }
-
   }
 
   closeClawObject();
