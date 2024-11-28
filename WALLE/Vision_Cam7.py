@@ -8,7 +8,7 @@ print("Servidor Flask iniciado en http://localhost:5000/video")
 
 
 # Configuración MQTT
-broker = "192.168.209.2"  # Dirección IP del broker MQTT
+broker = "192.168.5.2"  # Dirección IP del broker MQTT
 port = 1883
 object_topic = "esp32/object"  # Tópico para recibir el color del cubo a buscar
 movement_topic = "esp32/movement"  # Tópico para enviar la señal de "Stop"
@@ -37,12 +37,7 @@ mqtt_client.subscribe(object_topic)
 # Definición de rangos de colores en HSV
 color_ranges = {
     'rojo': [
-        ([175, 34, 49], [179, 255, 255]),       # Rojo
-        ([0, 82, 182], [10, 162, 255]),         # Rojo brillante
-        ([139, 48, 76], [179, 171, 237]),       # Rojo intenso
-        ([170, 82, 182], [180, 162, 255]),      # Rojo oscuro
-        ([0, 70, 50], [10, 255, 200]),          # Rojo saturado
-        ([160, 60, 100], [180, 200, 255])       # Rojizo
+        ([118, 163, 44], [179, 255, 255])       # Rojo
     ],
     'azul': [
         ([104, 34, 0], [115, 255, 221])         # Azul
@@ -53,7 +48,7 @@ color_ranges = {
 }
 
 # Fuente de video
-url = "http://10.25.82.187:4747/video"  # Ajusta la URL según tu configuración
+url = "http://192.168.5.8:4747/video"  # Ajusta la URL según tu configuración
 cap = cv2.VideoCapture(url)
 
 if not cap.isOpened():

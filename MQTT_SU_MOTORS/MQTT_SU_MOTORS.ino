@@ -41,7 +41,7 @@ const char* password = "ricki1903#$";
 // Casa
 //const char* mqttServer = "192.168.1.102";
 // TEC
-const char* mqttServer = "192.168.209.2";
+const char* mqttServer = "192.168.5.2";
 const int mqttPort = 1883;
 
 // Wi-Fi and MQTT clients
@@ -115,6 +115,13 @@ void forward() {
   ledcWrite(PWM_CHANNEL1, straightSpeedR);
   digitalWrite(IN2, LOW);
   digitalWrite(IN3, LOW);
+  ledcWrite(PWM_CHANNEL2, straightSpeedL);
+}
+
+void backward() {
+  ledcWrite(PWM_CHANNEL1, straightSpeedR);
+  digitalWrite(IN2, HIGH);
+  digitalWrite(IN3, HIGH);
   ledcWrite(PWM_CHANNEL2, straightSpeedL);
 }
 
@@ -253,10 +260,6 @@ void stopClaw() {
 void foundObject() {
   // const int frameCenter = 280; 
   // int alignmentError;
-  int32_t speedDiff;  
-  int error;
-  int32_t proportion = 128; // Coeficiente proporcional (ajustable)
-  int prev_error = 0;       // Almacena el error anterior
 
   openClaw();
   
@@ -272,25 +275,20 @@ void foundObject() {
   while (true) {
     mqttClient.loop();
 
-    // Calcula el error actual
-    //error = objectCenterXInt; // El valor ya está en el rango adecuado
-    // Calcula la corrección proporcional
-    //speedDiff = (error * (int32_t)proportion) / 256;
-
     // Aplica la corrección a los motores
-    if (objectCenterXInt < -10) {
+    if (objectCenterXInt < -20) {
       // Turn Left
-      ledcWrite(PWM_CHANNEL1, 70); 
+      ledcWrite(PWM_CHANNEL1, 60); 
       digitalWrite(IN2, LOW);
       digitalWrite(IN3, HIGH);
-      ledcWrite(PWM_CHANNEL2, 70);
+      ledcWrite(PWM_CHANNEL2, 60);
     } 
-    else if (objectCenterXInt > 10) {
+    else if (objectCenterXInt > 20) {
       // Turn Right
-      ledcWrite(PWM_CHANNEL1, 70);
+      ledcWrite(PWM_CHANNEL1, 60);
       digitalWrite(IN2, HIGH);
       digitalWrite(IN3, LOW);
-      ledcWrite(PWM_CHANNEL2, 70);
+      ledcWrite(PWM_CHANNEL2, 60);
     } 
     else {
       // Center (sin corrección adicional)
@@ -310,8 +308,25 @@ void foundObject() {
       break;
     }
   }
+  
 
   closeClawObject();
+
+  digitalWrite(buzzer, HIGH);
+  delay(500);
+  digitalWrite(buzzer, LOW);
+  delay(500);
+  digitalWrite(buzzer, HIGH);
+  delay(500);
+  digitalWrite(buzzer, LOW);
+  delay(500);
+  digitalWrite(buzzer, HIGH);
+  delay(500);
+  digitalWrite(buzzer, LOW);
+  delay(500);
+  digitalWrite(buzzer, HIGH);
+
+  
 
 }
 ///////////////////////////////////////////////////////////////////////////////////////
